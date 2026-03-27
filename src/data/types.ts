@@ -65,12 +65,16 @@ export interface YoutubeLink {
   videoTitle?: string;
 }
 
+export type RoadmapType = "grade" | "publisher";
+
 export interface Roadmap {
   id: string;
   name: string;
   description?: string;
+  type: RoadmapType;
   targetStartLevel: number;
   targetEndLevel: number;
+  publisherId?: string;
   displayOrder: number;
 }
 

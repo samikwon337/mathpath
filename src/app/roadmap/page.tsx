@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { LevelBadge } from "@/components/workbook/LevelBadge";
 import { getRoadmaps, getRoadmapSteps, getPublisherById } from "@/lib/api";
-import { DifficultyLevel } from "@/data/types";
+import { DifficultyLevel, Roadmap } from "@/data/types";
 import { useAuthContext } from "@/hooks/auth-context";
 
 const LEVEL_BG: Record<DifficultyLevel, string> = {
@@ -76,18 +76,22 @@ function WorkbookNode({ data }: NodeProps) {
 
 const nodeTypes = { workbook: WorkbookNode };
 
-export default function RoadmapPage() {
-  const router = useRouter();
-  const roadmaps = getRoadmaps();
-  const [activeTab, setActiveTab] = useState(roadmaps[0]?.id || "");
-  const { isLoggedIn, getWorkbookStatus } = useAuthContext();
-
+function RoadmapFlowChart({
+  roadmapId,
+  isLoggedIn,
+  getWorkbookStatus,
+  onNodeClick,
+}: {
+  roadmapId: string;
+  isLoggedIn: boolean;
+  getWorkbookStatus: (id: string) => { status: string } | undefined;
+  onNodeClick: (e: React.MouseEvent, node: Node) => void;
+}) {
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
-    const steps = getRoadmapSteps(activeTab);
+    const steps = getRoadmapSteps(roadmapId);
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
-    // Group steps by stepOrder
     const stepGroups = new Map<number, typeof steps>();
     for (const step of steps) {
       const group = stepGroups.get(step.stepOrder) || [];
@@ -122,7 +126,6 @@ export default function RoadmapPage() {
           },
         });
 
-        // Connect from previous column's main node to this node
         if (colIndex > 0) {
           const prevOrder = sortedOrders[colIndex - 1];
           const prevMainSteps = (stepGroups.get(prevOrder) || []).filter(
@@ -145,10 +148,76 @@ export default function RoadmapPage() {
     });
 
     return { nodes, edges };
-  }, [activeTab, isLoggedIn, getWorkbookStatus]);
+  }, [roadmapId, isLoggedIn, getWorkbookStatus]);
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+
+  return (
+    <div className="rounded-lg border bg-white dark:bg-gray-950 overflow-hidden" style={{ height: 400 }}>
+      <ReactFlow
+        key={roadmapId}
+        nodes={initialNodes}
+        edges={initialEdges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.3 }}
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background />
+        <Controls showInteractive={false} />
+      </ReactFlow>
+    </div>
+  );
+}
+
+function RoadmapLegend({ isLoggedIn }: { isLoggedIn: boolean }) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+      <div className="flex items-center gap-1.5">
+        <div className="h-3 w-6 rounded border-2 border-indigo-500 bg-indigo-50" />
+        필수 교재
+      </div>
+      <div className="flex items-center gap-1.5">
+        <div className="h-3 w-6 rounded border-2 border-dashed border-gray-400 bg-gray-50" />
+        선택 / 타사 확장
+      </div>
+      <div className="flex items-center gap-1.5">
+        <div className="h-0.5 w-6 bg-indigo-500" />
+        필수 경로
+      </div>
+      <div className="flex items-center gap-1.5">
+        <div className="h-0.5 w-6 border-t-2 border-dashed border-gray-400" />
+        선택 경로
+      </div>
+      {isLoggedIn && (
+        <div className="flex items-center gap-1.5">
+          <div className="h-4 w-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[8px]">
+            ✓
+          </div>
+          완료
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RoadmapSection({
+  roadmapList,
+  activeTab,
+  setActiveTab,
+  renderDescription,
+}: {
+  roadmapList: Roadmap[];
+  activeTab: string;
+  setActiveTab: (id: string) => void;
+  renderDescription: (rm: Roadmap) => React.ReactNode;
+}) {
+  const router = useRouter();
+  const { isLoggedIn, getWorkbookStatus } = useAuthContext();
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -160,93 +229,128 @@ export default function RoadmapPage() {
     [router]
   );
 
-  const activeRoadmap = roadmaps.find((r) => r.id === activeTab);
+  const activeRoadmap = roadmapList.find((r) => r.id === activeTab);
+
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="mb-4 flex-wrap h-auto gap-1">
+        {roadmapList.map((rm) => (
+          <TabsTrigger key={rm.id} value={rm.id} className="text-sm">
+            {rm.name}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      {roadmapList.map((rm) => (
+        <TabsContent key={rm.id} value={rm.id}>
+          {activeRoadmap && activeRoadmap.id === rm.id && (
+            <>
+              <Card className="mb-4">
+                <CardContent className="p-4">
+                  {renderDescription(rm)}
+                </CardContent>
+              </Card>
+
+              <RoadmapFlowChart
+                roadmapId={rm.id}
+                isLoggedIn={isLoggedIn}
+                getWorkbookStatus={getWorkbookStatus}
+                onNodeClick={onNodeClick}
+              />
+
+              <RoadmapLegend isLoggedIn={isLoggedIn} />
+            </>
+          )}
+        </TabsContent>
+      ))}
+    </Tabs>
+  );
+}
+
+export default function RoadmapPage() {
+  const gradeRoadmaps = getRoadmaps("grade");
+  const publisherRoadmaps = getRoadmaps("publisher");
+
+  const [activeGradeTab, setActiveGradeTab] = useState(gradeRoadmaps[0]?.id || "");
+  const [activePublisherTab, setActivePublisherTab] = useState(publisherRoadmaps[0]?.id || "");
+  const [section, setSection] = useState<"grade" | "publisher">("grade");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold md:text-3xl">학습 로드맵</h1>
         <p className="mt-1 text-muted-foreground">
-          등급별 맞춤 문제집 학습 경로를 확인하세요
+          등급별/출판사별 맞춤 문제집 학습 경로를 확인하세요
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          {roadmaps.map((rm) => (
-            <TabsTrigger key={rm.id} value={rm.id} className="text-sm">
-              {rm.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Section Toggle */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setSection("grade")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            section === "grade"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          등급별 로드맵
+        </button>
+        <button
+          onClick={() => setSection("publisher")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            section === "publisher"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          출판사별 로드맵
+        </button>
+      </div>
 
-        {roadmaps.map((rm) => (
-          <TabsContent key={rm.id} value={rm.id}>
-            {activeRoadmap && (
-              <Card className="mb-4">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      <LevelBadge level={Math.min(rm.targetStartLevel, 5) as DifficultyLevel} size="sm" />
-                      <span className="text-muted-foreground mx-1">→</span>
-                      <LevelBadge level={Math.min(rm.targetEndLevel, 5) as DifficultyLevel} size="sm" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {rm.description}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="rounded-lg border bg-white dark:bg-gray-950 overflow-hidden" style={{ height: 400 }}>
-              <ReactFlow
-                key={activeTab}
-                nodes={initialNodes}
-                edges={initialEdges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onNodeClick={onNodeClick}
-                nodeTypes={nodeTypes}
-                fitView
-                fitViewOptions={{ padding: 0.3 }}
-                proOptions={{ hideAttribution: true }}
-              >
-                <Background />
-                <Controls showInteractive={false} />
-              </ReactFlow>
+      {section === "grade" && (
+        <RoadmapSection
+          roadmapList={gradeRoadmaps}
+          activeTab={activeGradeTab}
+          setActiveTab={setActiveGradeTab}
+          renderDescription={(rm) => (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <LevelBadge level={Math.min(rm.targetStartLevel, 5) as DifficultyLevel} size="sm" />
+                <span className="text-muted-foreground mx-1">&rarr;</span>
+                <LevelBadge level={Math.min(rm.targetEndLevel, 5) as DifficultyLevel} size="sm" />
+              </div>
+              <p className="text-sm text-muted-foreground">{rm.description}</p>
             </div>
+          )}
+        />
+      )}
 
-            {/* Legend */}
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <div className="h-3 w-6 rounded border-2 border-indigo-500 bg-indigo-50" />
-                필수 교재
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-3 w-6 rounded border-2 border-dashed border-gray-400 bg-gray-50" />
-                선택 교재
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-0.5 w-6 bg-indigo-500" />
-                필수 경로
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-0.5 w-6 border-t-2 border-dashed border-gray-400" />
-                선택 경로
-              </div>
-              {isLoggedIn && (
-                <div className="flex items-center gap-1.5">
-                  <div className="h-4 w-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[8px]">
-                    ✓
-                  </div>
-                  완료
+      {section === "publisher" && (
+        <RoadmapSection
+          roadmapList={publisherRoadmaps}
+          activeTab={activePublisherTab}
+          setActiveTab={setActivePublisherTab}
+          renderDescription={(rm) => {
+            const publisher = rm.publisherId ? getPublisherById(rm.publisherId) : null;
+            return (
+              <div className="flex items-center gap-3">
+                {publisher && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium">
+                    {publisher.name}
+                  </span>
+                )}
+                <div className="flex items-center gap-1">
+                  <LevelBadge level={Math.min(rm.targetStartLevel, 5) as DifficultyLevel} size="xs" showLabel={false} />
+                  <span className="text-muted-foreground text-xs">&rarr;</span>
+                  <LevelBadge level={Math.min(rm.targetEndLevel, 5) as DifficultyLevel} size="xs" showLabel={false} />
                 </div>
-              )}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+                <p className="text-sm text-muted-foreground">{rm.description}</p>
+              </div>
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

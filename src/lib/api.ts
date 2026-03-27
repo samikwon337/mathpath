@@ -139,8 +139,12 @@ export function getYoutubeLinks(workbookId: string) {
 }
 
 // Roadmaps
-export function getRoadmaps() {
-  return roadmaps.sort((a, b) => a.displayOrder - b.displayOrder);
+export function getRoadmaps(type?: "grade" | "publisher") {
+  let result = roadmaps;
+  if (type) {
+    result = result.filter((r) => r.type === type);
+  }
+  return result.sort((a, b) => a.displayOrder - b.displayOrder);
 }
 
 export function getRoadmapById(id: string) {
