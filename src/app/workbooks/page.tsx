@@ -63,21 +63,44 @@ function WorkbooksPageInner() {
     setSearch("");
   };
 
-  const handleSelect = (setter: (v: string) => void) => (v: string | null) => setter(v ?? "");
+  const SUBJECT_OPTIONS = [
+    { value: "_all", label: "전체" },
+    ...subjects.map((s) => ({ value: s.id, label: s.name })),
+  ];
+  const PUBLISHER_OPTIONS = [
+    { value: "_all", label: "전체" },
+    ...publishers.map((p) => ({ value: p.id, label: p.name })),
+  ];
+  const DIFFICULTY_OPTIONS = [
+    { value: "_all", label: "전체" },
+    ...([1, 2, 3, 4, 5] as DifficultyLevel[]).map((lv) => ({
+      value: String(lv),
+      label: `Lv.${lv} ${DIFFICULTY_LABELS[lv]}`,
+    })),
+  ];
+  const BOOK_TYPE_OPTIONS = [
+    { value: "_all", label: "전체" },
+    ...Object.entries(BOOK_TYPE_LABELS).map(([key, label]) => ({
+      value: key,
+      label,
+    })),
+  ];
+
+  const handleSelect = (setter: (v: string) => void) => (v: string | null) =>
+    setter(!v || v === "_all" ? "" : v);
 
   const FilterControls = () => (
     <div className="space-y-4">
       <div>
         <label className="text-sm font-medium mb-1.5 block">과목</label>
-        <Select value={subjectId} onValueChange={handleSelect(setSubjectId)}>
+        <Select value={subjectId || "_all"} onValueChange={handleSelect(setSubjectId)}>
           <SelectTrigger>
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
-            {subjects.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name}
+            {SUBJECT_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -86,15 +109,14 @@ function WorkbooksPageInner() {
 
       <div>
         <label className="text-sm font-medium mb-1.5 block">출판사</label>
-        <Select value={publisherId} onValueChange={handleSelect(setPublisherId)}>
+        <Select value={publisherId || "_all"} onValueChange={handleSelect(setPublisherId)}>
           <SelectTrigger>
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
-            {publishers.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
+            {PUBLISHER_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -103,15 +125,14 @@ function WorkbooksPageInner() {
 
       <div>
         <label className="text-sm font-medium mb-1.5 block">난이도</label>
-        <Select value={difficultyLevel} onValueChange={handleSelect(setDifficultyLevel)}>
+        <Select value={difficultyLevel || "_all"} onValueChange={handleSelect(setDifficultyLevel)}>
           <SelectTrigger>
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
-            {([1, 2, 3, 4, 5] as DifficultyLevel[]).map((level) => (
-              <SelectItem key={level} value={String(level)}>
-                Lv.{level} {DIFFICULTY_LABELS[level]}
+            {DIFFICULTY_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -120,15 +141,14 @@ function WorkbooksPageInner() {
 
       <div>
         <label className="text-sm font-medium mb-1.5 block">유형</label>
-        <Select value={bookType} onValueChange={handleSelect(setBookType)}>
+        <Select value={bookType || "_all"} onValueChange={handleSelect(setBookType)}>
           <SelectTrigger>
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
-            {Object.entries(BOOK_TYPE_LABELS).map(([key, label]) => (
-              <SelectItem key={key} value={key}>
-                {label}
+            {BOOK_TYPE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
               </SelectItem>
             ))}
           </SelectContent>
