@@ -17,4 +17,5 @@ export const publishers: Publisher[] = [
   { id: "pub-neungyul", name: "NE능률" },
   { id: "pub-ebs", name: "EBS" },
   { id: "pub-iruem", name: "이룸이앤비" },
+  { id: "pub-donga", name: "동아출판" },
 ];

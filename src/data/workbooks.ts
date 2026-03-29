@@ -414,7 +414,7 @@ export const workbooks: Workbook[] = [
   {
     id: "wb-absolutegrade",
     coverImageUrl: "/covers/absolutegrade.jpg",
-    publisherId: "pub-jinhaksa",
+    publisherId: "pub-donga",
     subjectIds: ["sub-algebra", "sub-calculus1", "sub-calculus2"],
     title: "절대등급",
     bookType: "deep",
@@ -582,7 +582,7 @@ export const workbooks: Workbook[] = [
   {
     id: "wb-ildeunggup",
     coverImageUrl: "/covers/ildeunggup.jpg",
-    publisherId: "pub-mirae",
+    publisherId: "pub-sukyung",
     subjectIds: ["sub-algebra", "sub-calculus1", "sub-calculus2"],
     title: "일등급수학",
     bookType: "deep",
@@ -632,7 +632,7 @@ export const workbooks: Workbook[] = [
   {
     id: "wb-mathgod",
     coverImageUrl: "/covers/mathgod.jpg",
-    publisherId: "pub-neungyul",
+    publisherId: "pub-visang",
     subjectIds: ["sub-algebra", "sub-calculus1", "sub-calculus2"],
     title: "수학의 신",
     bookType: "deep",
