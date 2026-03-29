@@ -1,60 +1,68 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Profile, UserWorkbook, WorkbookStatus } from "@/data/types";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
-const MOCK_PROFILE: Profile = {
-  id: "user-mock",
-  displayName: "테스트 학생",
-  avatarUrl: undefined,
-  currentGrade: "high2",
-  currentLevel: 3,
-  targetLevel: 1,
-};
+function userToProfile(user: User): Profile {
+  return {
+    id: user.id,
+    displayName:
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "사용자",
+    avatarUrl: user.user_metadata?.avatar_url,
+    currentGrade: undefined,
+    currentLevel: undefined,
+    targetLevel: undefined,
+  };
+}
 
 export function useAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userWorkbooks, setUserWorkbooks] = useState<UserWorkbook[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback(() => {
-    setIsLoggedIn(true);
-    setProfile(MOCK_PROFILE);
-    // Load mock user workbooks
-    setUserWorkbooks([
-      {
-        id: "uw-1",
-        userId: "user-mock",
-        workbookId: "wb-gaenyeomwonri",
-        status: "completed",
-        startedAt: "2025-01-15",
-        completedAt: "2025-02-20",
-      },
-      {
-        id: "uw-2",
-        userId: "user-mock",
-        workbookId: "wb-rpm",
-        status: "completed",
-        startedAt: "2025-02-25",
-        completedAt: "2025-03-20",
-      },
-      {
-        id: "uw-3",
-        userId: "user-mock",
-        workbookId: "wb-ssen",
-        status: "in_progress",
-        startedAt: "2025-03-22",
-      },
-      {
-        id: "uw-4",
-        userId: "user-mock",
-        workbookId: "wb-jaistory",
-        status: "planned",
-      },
-    ]);
+  // 초기 세션 확인 + 세션 변경 구독
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsLoggedIn(true);
+        setProfile(userToProfile(session.user));
+      }
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setIsLoggedIn(true);
+        setProfile(userToProfile(session.user));
+      } else {
+        setIsLoggedIn(false);
+        setProfile(null);
+        setUserWorkbooks([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const logout = useCallback(() => {
+  const login = useCallback(async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  }, []);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setIsLoggedIn(false);
     setProfile(null);
     setUserWorkbooks([]);
@@ -85,7 +93,7 @@ export function useAuth() {
             ...prev,
             {
               id: `uw-${Date.now()}`,
-              userId: profile?.id || "user-mock",
+              userId: profile?.id || "",
               workbookId,
               status,
               startedAt: status === "in_progress" ? now : undefined,
@@ -115,6 +123,7 @@ export function useAuth() {
     isLoggedIn,
     profile,
     userWorkbooks,
+    loading,
     login,
     logout,
     updateWorkbookStatus,

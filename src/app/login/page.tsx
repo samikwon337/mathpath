@@ -16,9 +16,8 @@ export default function LoginPage() {
     }
   }, [isLoggedIn, router]);
 
-  const handleMockLogin = () => {
+  const handleGoogleLogin = () => {
     login();
-    router.push("/dashboard");
   };
 
   return (
@@ -37,7 +36,7 @@ export default function LoginPage() {
           <Button
             className="w-full gap-2"
             variant="outline"
-            onClick={handleMockLogin}
+            onClick={handleGoogleLogin}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -59,9 +58,6 @@ export default function LoginPage() {
             </svg>
             Google로 로그인
           </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            현재는 테스트 모드입니다. 클릭하면 바로 로그인됩니다.
-          </p>
         </CardContent>
       </Card>
     </div>
