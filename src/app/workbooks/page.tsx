@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,11 +25,14 @@ import {
 
 type SortOption = "difficulty" | "name" | "rating";
 
-export default function WorkbooksPage() {
+function WorkbooksPageInner() {
+  const searchParams = useSearchParams();
+  const levelParam = searchParams.get("level") || "";
+
   const [search, setSearch] = useState("");
   const [subjectId, setSubjectId] = useState<string>("");
   const [publisherId, setPublisherId] = useState<string>("");
-  const [difficultyLevel, setDifficultyLevel] = useState<string>("");
+  const [difficultyLevel, setDifficultyLevel] = useState<string>(levelParam);
   const [bookType, setBookType] = useState<string>("");
   const [sort, setSort] = useState<SortOption>("difficulty");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -224,5 +228,13 @@ export default function WorkbooksPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WorkbooksPage() {
+  return (
+    <Suspense>
+      <WorkbooksPageInner />
+    </Suspense>
   );
 }

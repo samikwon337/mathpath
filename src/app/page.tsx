@@ -265,7 +265,7 @@ function RecommendedRoadmaps() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {gradeRoadmaps.map((rm, i) => (
-            <Link key={rm.id} href="/roadmap">
+            <Link key={rm.id} href={`/roadmap?tab=${rm.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                 <CardContent className="p-4">
                   <div className={`h-1 w-12 rounded-full bg-gradient-to-r ${GRADE_COLORS[i] || GRADE_COLORS[0]} mb-2`} />
@@ -290,7 +290,7 @@ function RecommendedRoadmaps() {
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {publisherRoadmaps.map((rm) => (
-            <Link key={rm.id} href="/roadmap" className="shrink-0">
+            <Link key={rm.id} href={`/roadmap?tab=${rm.id}`} className="shrink-0">
               <Card className="hover:shadow-md transition-shadow cursor-pointer w-44">
                 <CardContent className="p-3">
                   <h4 className="font-semibold text-sm truncate">{rm.name}</h4>

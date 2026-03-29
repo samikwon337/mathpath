@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ReactFlow,
   Node,
@@ -267,13 +268,39 @@ function RoadmapSection({
   );
 }
 
-export default function RoadmapPage() {
+import { Suspense } from "react";
+
+function RoadmapPageInner() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+
   const gradeRoadmaps = getRoadmaps("grade");
   const publisherRoadmaps = getRoadmaps("publisher");
 
-  const [activeGradeTab, setActiveGradeTab] = useState(gradeRoadmaps[0]?.id || "");
-  const [activePublisherTab, setActivePublisherTab] = useState(publisherRoadmaps[0]?.id || "");
-  const [section, setSection] = useState<"grade" | "publisher">("grade");
+  const isPublisherTab = publisherRoadmaps.some((r) => r.id === tabParam);
+  const isGradeTab = gradeRoadmaps.some((r) => r.id === tabParam);
+
+  const [activeGradeTab, setActiveGradeTab] = useState(
+    isGradeTab && tabParam ? tabParam : gradeRoadmaps[0]?.id || ""
+  );
+  const [activePublisherTab, setActivePublisherTab] = useState(
+    isPublisherTab && tabParam ? tabParam : publisherRoadmaps[0]?.id || ""
+  );
+  const [section, setSection] = useState<"grade" | "publisher">(
+    isPublisherTab ? "publisher" : "grade"
+  );
+
+  // URL 파라미터 변경 시 탭 동기화
+  useEffect(() => {
+    if (!tabParam) return;
+    if (gradeRoadmaps.some((r) => r.id === tabParam)) {
+      setSection("grade");
+      setActiveGradeTab(tabParam);
+    } else if (publisherRoadmaps.some((r) => r.id === tabParam)) {
+      setSection("publisher");
+      setActivePublisherTab(tabParam);
+    }
+  }, [tabParam, gradeRoadmaps, publisherRoadmaps]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
@@ -352,5 +379,13 @@ export default function RoadmapPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function RoadmapPage() {
+  return (
+    <Suspense>
+      <RoadmapPageInner />
+    </Suspense>
   );
 }
