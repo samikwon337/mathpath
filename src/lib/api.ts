@@ -3,7 +3,6 @@ import { subjects } from "@/data/subjects";
 import { workbooks } from "@/data/workbooks";
 import { workbookRelations } from "@/data/relations";
 import { roadmaps, roadmapSteps } from "@/data/roadmaps";
-import { youtubeLinks } from "@/data/youtube-links";
 import {
   BookType,
   DifficultyLevel,
@@ -130,11 +129,6 @@ export function getWorkbookRelations(workbookId: string): {
       (r) => r.fromWorkbookId
     ),
   };
-}
-
-// Youtube Links
-export function getYoutubeLinks(workbookId: string) {
-  return youtubeLinks.filter((l) => l.workbookId === workbookId);
 }
 
 // Roadmaps

@@ -56,14 +56,6 @@ export interface WorkbookRelation {
   displayOrder: number;
 }
 
-export interface YoutubeLink {
-  id: string;
-  workbookId: string;
-  youtubeUrl: string;
-  channelName?: string;
-  videoTitle?: string;
-}
-
 export type RoadmapType = "grade" | "publisher";
 
 export interface Roadmap {

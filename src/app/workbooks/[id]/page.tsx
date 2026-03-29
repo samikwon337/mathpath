@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ExternalLink,
-  Play,
   ThumbsUp,
   ThumbsDown,
   ChevronRight,
@@ -27,7 +26,6 @@ import {
   getPublisherById,
   getWorkbookRelations,
   getWorkbooksByPublisher,
-  getYoutubeLinks,
 } from "@/lib/api";
 import { useAuthContext } from "@/hooks/auth-context";
 import { DifficultyLevel } from "@/data/types";
@@ -48,7 +46,6 @@ export default function WorkbookDetailPage({
 
   const publisher = getPublisherById(workbook.publisherId);
   const relations = getWorkbookRelations(id);
-  const youtubeLinks = getYoutubeLinks(id);
   const publisherWorkbooks = getWorkbooksByPublisher(workbook.publisherId).filter(
     (w) => w.id !== id
   );
@@ -295,42 +292,6 @@ export default function WorkbookDetailPage({
             </div>
           )}
 
-          {/* YouTube Links */}
-          {youtubeLinks.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <Play className="h-5 w-5 text-red-500" />
-                  유튜브 리뷰
-                </h2>
-                <div className="space-y-2">
-                  {youtubeLinks.map((yl) => (
-                    <a
-                      key={yl.id}
-                      href={yl.youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-lg border p-3 hover:bg-accent transition-colors"
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded bg-red-100 text-red-500 shrink-0">
-                        <Play className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {yl.videoTitle}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {yl.channelName}
-                        </p>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
 
           {/* Same Publisher */}
           {publisherWorkbooks.length > 0 && (
