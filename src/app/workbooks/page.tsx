@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, GitCompareArrows } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { WorkbookCard } from "@/components/workbook/WorkbookCard";
-import { getWorkbooks, getPublishers, getSubjects } from "@/lib/api";
+import { WorkbookCompare } from "@/components/workbook/WorkbookCompare";
+import { getWorkbooks, getWorkbookById, getPublishers, getSubjects } from "@/lib/api";
 import {
   BookType,
   DifficultyLevel,
@@ -23,7 +24,7 @@ import {
   DIFFICULTY_LABELS,
 } from "@/data/types";
 
-type SortOption = "difficulty" | "name" | "rating";
+type SortOption = "difficulty" | "name";
 
 function WorkbooksPageInner() {
   const searchParams = useSearchParams();
@@ -36,6 +37,28 @@ function WorkbooksPageInner() {
   const [bookType, setBookType] = useState<string>("");
   const [sort, setSort] = useState<SortOption>("difficulty");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  const MAX_COMPARE = 3;
+
+  const handleCompareToggle = useCallback((workbookId: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(workbookId)) {
+        return prev.filter((id) => id !== workbookId);
+      }
+      if (prev.length >= MAX_COMPARE) return prev;
+      return [...prev, workbookId];
+    });
+  }, []);
+
+  const compareWorkbooks = useMemo(
+    () =>
+      compareIds
+        .map((id) => getWorkbookById(id))
+        .filter(Boolean) as NonNullable<ReturnType<typeof getWorkbookById>>[],
+    [compareIds]
+  );
 
   const publishers = getPublishers();
   const subjects = getSubjects();
@@ -89,13 +112,16 @@ function WorkbooksPageInner() {
   const handleSelect = (setter: (v: string) => void) => (v: string | null) =>
     setter(!v || v === "_all" ? "" : v);
 
-  const FilterControls = () => (
+  const findLabel = (options: { value: string; label: string }[], value: string) =>
+    options.find((o) => o.value === value)?.label ?? "전체";
+
+  const filterControlsJsx = (
     <div className="space-y-4">
       <div>
         <label className="text-sm font-medium mb-1.5 block">과목</label>
         <Select value={subjectId || "_all"} onValueChange={handleSelect(setSubjectId)}>
           <SelectTrigger>
-            <SelectValue placeholder="전체" />
+            <SelectValue placeholder="전체">{findLabel(SUBJECT_OPTIONS, subjectId || "_all")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {SUBJECT_OPTIONS.map((opt) => (
@@ -111,7 +137,7 @@ function WorkbooksPageInner() {
         <label className="text-sm font-medium mb-1.5 block">출판사</label>
         <Select value={publisherId || "_all"} onValueChange={handleSelect(setPublisherId)}>
           <SelectTrigger>
-            <SelectValue placeholder="전체" />
+            <SelectValue placeholder="전체">{findLabel(PUBLISHER_OPTIONS, publisherId || "_all")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {PUBLISHER_OPTIONS.map((opt) => (
@@ -127,7 +153,7 @@ function WorkbooksPageInner() {
         <label className="text-sm font-medium mb-1.5 block">난이도</label>
         <Select value={difficultyLevel || "_all"} onValueChange={handleSelect(setDifficultyLevel)}>
           <SelectTrigger>
-            <SelectValue placeholder="전체" />
+            <SelectValue placeholder="전체">{findLabel(DIFFICULTY_OPTIONS, difficultyLevel || "_all")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {DIFFICULTY_OPTIONS.map((opt) => (
@@ -143,7 +169,7 @@ function WorkbooksPageInner() {
         <label className="text-sm font-medium mb-1.5 block">유형</label>
         <Select value={bookType || "_all"} onValueChange={handleSelect(setBookType)}>
           <SelectTrigger>
-            <SelectValue placeholder="전체" />
+            <SelectValue placeholder="전체">{findLabel(BOOK_TYPE_OPTIONS, bookType || "_all")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {BOOK_TYPE_OPTIONS.map((opt) => (
@@ -187,12 +213,11 @@ function WorkbooksPageInner() {
         </div>
         <Select value={sort} onValueChange={(v) => setSort((v ?? "difficulty") as SortOption)}>
           <SelectTrigger className="w-full sm:w-40">
-            <SelectValue />
+            <SelectValue>{{ difficulty: "난이도순", name: "이름순" }[sort]}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="difficulty">난이도순</SelectItem>
             <SelectItem value="name">이름순</SelectItem>
-            <SelectItem value="rating">평점순</SelectItem>
           </SelectContent>
         </Select>
 
@@ -214,7 +239,7 @@ function WorkbooksPageInner() {
           />
           <SheetContent side="left" className="w-72">
             <SheetTitle className="text-lg font-semibold mb-4 mt-4">필터</SheetTitle>
-            <FilterControls />
+            {filterControlsJsx}
           </SheetContent>
         </Sheet>
       </div>
@@ -224,7 +249,7 @@ function WorkbooksPageInner() {
         <aside className="hidden md:block w-56 shrink-0">
           <div className="sticky top-20">
             <h3 className="text-sm font-semibold mb-3">필터</h3>
-            <FilterControls />
+            {filterControlsJsx}
           </div>
         </aside>
 
@@ -241,12 +266,55 @@ function WorkbooksPageInner() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {workbooks.map((wb) => (
-                <WorkbookCard key={wb.id} workbook={wb} />
+                <WorkbookCard
+                  key={wb.id}
+                  workbook={wb}
+                  onCompareToggle={handleCompareToggle}
+                  isCompared={compareIds.includes(wb.id)}
+                />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Compare bottom bar */}
+      {compareIds.length > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
+          <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm">
+              <GitCompareArrows className="h-4 w-4 text-primary" />
+              <span>
+                <span className="font-semibold">{compareIds.length}</span>
+                <span className="text-muted-foreground">/{MAX_COMPARE}개 선택됨</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCompareIds([])}
+              >
+                선택 해제
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setCompareOpen(true)}
+                disabled={compareIds.length < 2}
+              >
+                비교하기
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compare dialog */}
+      <WorkbookCompare
+        workbooks={compareWorkbooks}
+        open={compareOpen}
+        onOpenChange={setCompareOpen}
+      />
     </div>
   );
 }

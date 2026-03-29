@@ -16,7 +16,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useRouter } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs UI replaced with plain buttons due to Base UI controlled-mode issues
 import { Card, CardContent } from "@/components/ui/card";
 import { LevelBadge } from "@/components/workbook/LevelBadge";
 import { getRoadmaps, getRoadmapSteps, getPublisherById } from "@/lib/api";
@@ -151,15 +151,19 @@ function RoadmapFlowChart({
     return { nodes, edges };
   }, [roadmapId, isLoggedIn, getWorkbookStatus]);
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   return (
     <div className="rounded-lg border bg-white dark:bg-gray-950 overflow-hidden" style={{ height: 400 }}>
       <ReactFlow
-        key={roadmapId}
-        nodes={initialNodes}
-        edges={initialEdges}
+        nodes={nodes}
+        edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
@@ -208,17 +212,16 @@ function RoadmapLegend({ isLoggedIn }: { isLoggedIn: boolean }) {
 
 function RoadmapSection({
   roadmapList,
-  activeTab,
-  setActiveTab,
+  defaultTab,
   renderDescription,
 }: {
   roadmapList: Roadmap[];
-  activeTab: string;
-  setActiveTab: (id: string) => void;
+  defaultTab: string;
   renderDescription: (rm: Roadmap) => React.ReactNode;
 }) {
   const router = useRouter();
   const { isLoggedIn, getWorkbookStatus } = useAuthContext();
+  const [currentTab, setCurrentTab] = useState(defaultTab);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -230,41 +233,48 @@ function RoadmapSection({
     [router]
   );
 
-  const activeRoadmap = roadmapList.find((r) => r.id === activeTab);
-
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="mb-4 flex-wrap h-auto gap-1">
+    <div>
+      {/* Tab buttons - plain buttons instead of Base UI Tabs */}
+      <div className="inline-flex flex-wrap gap-1 rounded-lg bg-muted p-[3px] mb-4">
         {roadmapList.map((rm) => (
-          <TabsTrigger key={rm.id} value={rm.id} className="text-sm">
+          <button
+            key={rm.id}
+            onClick={() => setCurrentTab(rm.id)}
+            className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              currentTab === rm.id
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
             {rm.name}
-          </TabsTrigger>
+          </button>
         ))}
-      </TabsList>
+      </div>
 
-      {roadmapList.map((rm) => (
-        <TabsContent key={rm.id} value={rm.id}>
-          {activeRoadmap && activeRoadmap.id === rm.id && (
-            <>
-              <Card className="mb-4">
-                <CardContent className="p-4">
-                  {renderDescription(rm)}
-                </CardContent>
-              </Card>
+      {/* Active tab content */}
+      {roadmapList.map((rm) =>
+        rm.id === currentTab ? (
+          <div key={rm.id}>
+            <Card className="mb-4">
+              <CardContent className="p-4">
+                {renderDescription(rm)}
+              </CardContent>
+            </Card>
 
-              <RoadmapFlowChart
-                roadmapId={rm.id}
-                isLoggedIn={isLoggedIn}
-                getWorkbookStatus={getWorkbookStatus}
-                onNodeClick={onNodeClick}
-              />
+            <RoadmapFlowChart
+              key={rm.id}
+              roadmapId={rm.id}
+              isLoggedIn={isLoggedIn}
+              getWorkbookStatus={getWorkbookStatus}
+              onNodeClick={onNodeClick}
+            />
 
-              <RoadmapLegend isLoggedIn={isLoggedIn} />
-            </>
-          )}
-        </TabsContent>
-      ))}
-    </Tabs>
+            <RoadmapLegend isLoggedIn={isLoggedIn} />
+          </div>
+        ) : null
+      )}
+    </div>
   );
 }
 
@@ -278,29 +288,15 @@ function RoadmapPageInner() {
   const publisherRoadmaps = getRoadmaps("publisher");
 
   const isPublisherTab = publisherRoadmaps.some((r) => r.id === tabParam);
-  const isGradeTab = gradeRoadmaps.some((r) => r.id === tabParam);
 
-  const [activeGradeTab, setActiveGradeTab] = useState(
-    isGradeTab && tabParam ? tabParam : gradeRoadmaps[0]?.id || ""
-  );
-  const [activePublisherTab, setActivePublisherTab] = useState(
-    isPublisherTab && tabParam ? tabParam : publisherRoadmaps[0]?.id || ""
-  );
   const [section, setSection] = useState<"grade" | "publisher">(
     isPublisherTab ? "publisher" : "grade"
   );
 
-  // URL 파라미터 변경 시 탭 동기화
-  useEffect(() => {
-    if (!tabParam) return;
-    if (gradeRoadmaps.some((r) => r.id === tabParam)) {
-      setSection("grade");
-      setActiveGradeTab(tabParam);
-    } else if (publisherRoadmaps.some((r) => r.id === tabParam)) {
-      setSection("publisher");
-      setActivePublisherTab(tabParam);
-    }
-  }, [tabParam, gradeRoadmaps, publisherRoadmaps]);
+  const defaultGradeTab = (tabParam && gradeRoadmaps.some((r) => r.id === tabParam))
+    ? tabParam : gradeRoadmaps[0]?.id || "";
+  const defaultPublisherTab = (tabParam && publisherRoadmaps.some((r) => r.id === tabParam))
+    ? tabParam : publisherRoadmaps[0]?.id || "";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
@@ -338,14 +334,17 @@ function RoadmapPageInner() {
       {section === "grade" && (
         <RoadmapSection
           roadmapList={gradeRoadmaps}
-          activeTab={activeGradeTab}
-          setActiveTab={setActiveGradeTab}
+          defaultTab={defaultGradeTab}
           renderDescription={(rm) => (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <LevelBadge level={Math.min(rm.targetStartLevel, 5) as DifficultyLevel} size="sm" />
-                <span className="text-muted-foreground mx-1">&rarr;</span>
-                <LevelBadge level={Math.min(rm.targetEndLevel, 5) as DifficultyLevel} size="sm" />
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold">
+                  {rm.targetStartLevel}등급
+                </span>
+                <span className="text-muted-foreground">&rarr;</span>
+                <span className="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 px-2.5 py-0.5 text-xs font-semibold">
+                  {rm.targetEndLevel}등급
+                </span>
               </div>
               <p className="text-sm text-muted-foreground">{rm.description}</p>
             </div>
@@ -356,8 +355,7 @@ function RoadmapPageInner() {
       {section === "publisher" && (
         <RoadmapSection
           roadmapList={publisherRoadmaps}
-          activeTab={activePublisherTab}
-          setActiveTab={setActivePublisherTab}
+          defaultTab={defaultPublisherTab}
           renderDescription={(rm) => {
             const publisher = rm.publisherId ? getPublisherById(rm.publisherId) : null;
             return (

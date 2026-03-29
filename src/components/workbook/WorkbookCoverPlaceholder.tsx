@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { DifficultyLevel } from "@/data/types";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +15,28 @@ export function WorkbookCoverPlaceholder({
   publisher,
   level,
   className,
+  coverImageUrl,
 }: {
   title: string;
   publisher: string;
   level: DifficultyLevel;
   className?: string;
+  coverImageUrl?: string;
 }) {
+  if (coverImageUrl) {
+    return (
+      <div className={cn("relative rounded-lg overflow-hidden bg-muted", className)}>
+        <Image
+          src={coverImageUrl}
+          alt={`${title} 표지`}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(

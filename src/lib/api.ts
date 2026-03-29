@@ -38,7 +38,7 @@ export function getWorkbooks(filters?: {
   difficultyLevel?: DifficultyLevel;
   bookType?: BookType;
   search?: string;
-  sort?: "difficulty" | "name" | "rating";
+  sort?: "difficulty" | "name";
 }) {
   let result = workbooks.filter((w) => w.isActive);
 
@@ -72,8 +72,6 @@ export function getWorkbooks(filters?: {
     result.sort((a, b) => a.difficultyLevel - b.difficultyLevel);
   } else if (filters?.sort === "name") {
     result.sort((a, b) => a.title.localeCompare(b.title, "ko"));
-  } else if (filters?.sort === "rating") {
-    result.sort((a, b) => b.avgRating - a.avgRating);
   }
 
   return result;

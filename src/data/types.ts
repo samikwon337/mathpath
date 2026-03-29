@@ -38,12 +38,11 @@ export interface Workbook {
   pros: string[];
   cons: string[];
   recommendedFor?: string;
+  studyTips?: string[];
   purchaseUrlKyobo?: string;
   purchaseUrlYes24?: string;
   tags: string[];
   isActive: boolean;
-  avgRating: number;
-  reviewCount: number;
 }
 
 export type RelationType = "next_step" | "complement" | "alternative";

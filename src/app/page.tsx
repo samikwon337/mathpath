@@ -21,6 +21,7 @@ import { LevelBadge } from "@/components/workbook/LevelBadge";
 import { BookTypeBadge } from "@/components/workbook/BookTypeBadge";
 import { WorkbookCoverPlaceholder } from "@/components/workbook/WorkbookCoverPlaceholder";
 import { StatusToggle } from "@/components/workbook/StatusToggle";
+import { QuickRecommend } from "@/components/workbook/QuickRecommend";
 import { MyRoadmapFlow } from "@/components/roadmap/MyRoadmapFlow";
 import { useAuthContext } from "@/hooks/auth-context";
 import {
@@ -148,6 +149,7 @@ function MyRoadmapSection() {
                   title={n.workbook.title}
                   publisher={publisher?.name || ""}
                   level={n.workbook.difficultyLevel as DifficultyLevel}
+                  coverImageUrl={n.workbook.coverImageUrl}
                   className="w-10 h-13 text-[8px]"
                 />
               </Link>
@@ -196,6 +198,7 @@ function MyRoadmapSection() {
                       title={s.title}
                       publisher={publisher?.name || ""}
                       level={s.difficultyLevel as DifficultyLevel}
+                      coverImageUrl={s.coverImageUrl}
                       className="w-10 h-13 text-[8px] opacity-70"
                     />
                     <div className="flex-1 min-w-0">
@@ -371,6 +374,9 @@ export default function HomePage() {
         </div>
         <RecommendedRoadmaps />
       </section>
+
+      {/* Quick Recommendation Quiz */}
+      <QuickRecommend />
 
       {/* Quick Access: Difficulty Levels */}
       <section>

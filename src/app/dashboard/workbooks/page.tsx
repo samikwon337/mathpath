@@ -101,6 +101,7 @@ export default function MyWorkbooksPage() {
                           title={item.workbook!.title}
                           publisher={item.publisher?.name || ""}
                           level={item.workbook!.difficultyLevel as DifficultyLevel}
+                          coverImageUrl={item.workbook!.coverImageUrl}
                           className="w-16 h-20 text-[10px]"
                         />
                       </Link>

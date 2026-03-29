@@ -5,13 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Star,
   ExternalLink,
   Play,
   ThumbsUp,
   ThumbsDown,
   ChevronRight,
   BookOpen,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,6 +74,7 @@ export default function WorkbookDetailPage({
             title={workbook.title}
             publisher={publisher?.name || ""}
             level={workbook.difficultyLevel as DifficultyLevel}
+            coverImageUrl={workbook.coverImageUrl}
             className="aspect-[3/4] w-full max-w-[300px] mx-auto text-2xl"
           />
 
@@ -130,15 +131,6 @@ export default function WorkbookDetailPage({
               {workbook.problemCount && ` | ${workbook.problemCount}문제`}
               {workbook.targetAudience && ` | ${workbook.targetAudience}`}
             </p>
-            {workbook.reviewCount > 0 && (
-              <div className="flex items-center gap-1.5 mt-2">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-semibold">{workbook.avgRating}</span>
-                <span className="text-sm text-muted-foreground">
-                  ({workbook.reviewCount}개 리뷰)
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Summary */}
@@ -201,6 +193,28 @@ export default function WorkbookDetailPage({
               <p className="text-sm font-medium mb-1">추천 대상</p>
               <p className="text-sm text-muted-foreground">{workbook.recommendedFor}</p>
             </div>
+          )}
+
+          {/* Study Tips */}
+          {workbook.studyTips && workbook.studyTips.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-1.5 text-amber-600">
+                  <Lightbulb className="h-4 w-4" />
+                  학습 활용 팁
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="space-y-2">
+                  {workbook.studyTips.map((tip, i) => (
+                    <li key={i} className="text-sm flex items-start gap-2">
+                      <span className="text-amber-500 mt-0.5 shrink-0">{i + 1}.</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           )}
 
           <Separator />
