@@ -99,6 +99,15 @@ export interface Profile {
   targetLevel?: number;
 }
 
+export interface WorkbookYoutubeLink {
+  id: string;
+  workbookId: string;
+  youtubeUrl: string;
+  videoTitle: string;
+  channelName?: string;
+  displayOrder: number;
+}
+
 export interface WorkbookReview {
   id: string;
   workbookId: string;

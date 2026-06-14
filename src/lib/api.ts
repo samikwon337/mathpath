@@ -3,6 +3,7 @@ import { subjects } from "@/data/subjects";
 import { workbooks } from "@/data/workbooks";
 import { workbookRelations } from "@/data/relations";
 import { roadmaps, roadmapSteps } from "@/data/roadmaps";
+import { workbookYoutubeLinks } from "@/data/youtube-links";
 import {
   BookType,
   DifficultyLevel,
@@ -10,6 +11,7 @@ import {
   WorkbookRelation,
   RoadmapStep,
   UserWorkbook,
+  WorkbookYoutubeLink,
 } from "@/data/types";
 
 // Publishers
@@ -78,6 +80,12 @@ export function getWorkbooks(filters?: {
 
 export function getWorkbookById(id: string) {
   return workbooks.find((w) => w.id === id);
+}
+
+export function getYoutubeLinksByWorkbookId(workbookId: string): WorkbookYoutubeLink[] {
+  return workbookYoutubeLinks
+    .filter((l) => l.workbookId === workbookId)
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 }
 
 export function getWorkbooksByPublisher(publisherId: string) {

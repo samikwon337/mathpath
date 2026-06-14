@@ -11,6 +11,7 @@ import {
   ChevronRight,
   BookOpen,
   Lightbulb,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import {
   getPublisherById,
   getWorkbookRelations,
   getWorkbooksByPublisher,
+  getYoutubeLinksByWorkbookId,
 } from "@/lib/api";
 import { useAuthContext } from "@/hooks/auth-context";
 import { DifficultyLevel } from "@/data/types";
@@ -50,6 +52,8 @@ export default function WorkbookDetailPage({
     (w) => w.id !== id
   );
   const userStatus = isLoggedIn ? getWorkbookStatus(id) : undefined;
+
+  const youtubeLinks = getYoutubeLinksByWorkbookId(id);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
@@ -210,6 +214,39 @@ export default function WorkbookDetailPage({
                     </li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {youtubeLinks.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-1.5 text-red-600">
+                  <Video className="h-4 w-4" />
+                  리뷰 영상
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                {youtubeLinks.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2 rounded-md border p-3 text-sm hover:bg-accent transition-colors"
+                  >
+                    <Video className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
+                    <div>
+                      <p className="font-medium">{link.videoTitle}</p>
+                      {link.channelName && (
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          {link.channelName}
+                        </p>
+                      )}
+                    </div>
+                    <ExternalLink className="h-3 w-3 ml-auto shrink-0 text-muted-foreground" />
+                  </a>
+                ))}
               </CardContent>
             </Card>
           )}
