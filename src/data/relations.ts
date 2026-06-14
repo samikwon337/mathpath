@@ -42,4 +42,41 @@ export const workbookRelations: WorkbookRelation[] = [
   // ── 최상위 라인업 ──
   { id: "rel-23", fromWorkbookId: "wb-jungseok-advanced", toWorkbookId: "wb-choigangtot", relationType: "next_step", note: "정석 실력편 후 최고 난도", displayOrder: 1 },
   { id: "rel-24", fromWorkbookId: "wb-absolutegrade", toWorkbookId: "wb-mathgod", relationType: "alternative", note: "킬러급 대안", displayOrder: 1 },
+
+  // ── 완자 라인업 ──
+  { id: "rel-25", fromWorkbookId: "wb-wanja", toWorkbookId: "wb-wanja-gichul", relationType: "next_step", note: "개념 후 기출", displayOrder: 1 },
+  { id: "rel-26", fromWorkbookId: "wb-wanja", toWorkbookId: "wb-rpm", relationType: "alternative", note: "개념+유형 대안", displayOrder: 1 },
+
+  // ── 디딤돌·입문 ──
+  { id: "rel-27", fromWorkbookId: "wb-didimdol-concept", toWorkbookId: "wb-pungsanja", relationType: "alternative", note: "기초 개념서 대안", displayOrder: 1 },
+  { id: "rel-28", fromWorkbookId: "wb-startup", toWorkbookId: "wb-gaenyeomssen", relationType: "next_step", note: "입문 후 개념쎈", displayOrder: 1 },
+  { id: "rel-29", fromWorkbookId: "wb-goodbi", toWorkbookId: "wb-wanja", relationType: "alternative", note: "입문서 대안", displayOrder: 1 },
+
+  // ── 천재교육 라인업 ──
+  { id: "rel-30", fromWorkbookId: "wb-conceptplustype", toWorkbookId: "wb-choigangtot", relationType: "next_step", note: "유형 후 최고난도", displayOrder: 1 },
+  { id: "rel-31", fromWorkbookId: "wb-conceptplustype", toWorkbookId: "wb-lightssen", relationType: "alternative", note: "유형서 대안", displayOrder: 1 },
+
+  // ── 이투스 라인업 ──
+  { id: "rel-32", fromWorkbookId: "wb-bible", toWorkbookId: "wb-gojjaengi", relationType: "complement", note: "개념 후 심화 보완", displayOrder: 1 },
+
+  // ── EBS 라인업 ──
+  { id: "rel-33", fromWorkbookId: "wb-olympos", toWorkbookId: "wb-mothertongue", relationType: "alternative", note: "수능 대비 대안", displayOrder: 1 },
+  { id: "rel-34", fromWorkbookId: "wb-olympos", toWorkbookId: "wb-olympos-hard", relationType: "next_step", note: "기본 후 실전", displayOrder: 1 },
+  { id: "rel-35", fromWorkbookId: "wb-olympos-hard", toWorkbookId: "wb-choigangtot", relationType: "complement", note: "고난도 보완", displayOrder: 1 },
+
+  // ── 마플·개념원리 교차 ──
+  { id: "rel-36", fromWorkbookId: "wb-maple-textbook", toWorkbookId: "wb-gaenyeomwonri", relationType: "alternative", note: "개념서 대안", displayOrder: 1 },
+  { id: "rel-37", fromWorkbookId: "wb-jungseok-basic", toWorkbookId: "wb-gaenyeomwonri", relationType: "complement", note: "개념 보완", displayOrder: 1 },
+
+  // ── 풍산자·마플 교차 ──
+  { id: "rel-38", fromWorkbookId: "wb-pungsanja-type", toWorkbookId: "wb-maple-synergy", relationType: "alternative", note: "유형서 대안", displayOrder: 1 },
+
+  // ── 진학사·능률 ──
+  { id: "rel-39", fromWorkbookId: "wb-ildeunggup", toWorkbookId: "wb-blacklabel", relationType: "next_step", note: "준킬러 후 심화", displayOrder: 1 },
+  { id: "rel-40", fromWorkbookId: "wb-haebeob", toWorkbookId: "wb-gaenyeomwonri", relationType: "alternative", note: "개념서 대안", displayOrder: 1 },
+
+  // ── 신규 교재 (미래엔·쎈 과목별) ──
+  { id: "rel-41", fromWorkbookId: "wb-mirae-jungseok", toWorkbookId: "wb-lightssen", relationType: "alternative", note: "미래엔 기본 후 쎈 대안", displayOrder: 1 },
+  { id: "rel-42", fromWorkbookId: "wb-ssen", toWorkbookId: "wb-ssen-stats", relationType: "complement", note: "확통 유형 보강", displayOrder: 5 },
+  { id: "rel-43", fromWorkbookId: "wb-ssen", toWorkbookId: "wb-ssen-geometry", relationType: "complement", note: "기하 유형 보강", displayOrder: 6 },
 ];
