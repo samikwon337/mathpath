@@ -250,6 +250,7 @@ function RecommendedRoadmaps() {
   const publisherRoadmaps = getRoadmaps("publisher");
 
   const GRADE_COLORS = [
+    "from-emerald-500 to-red-500",
     "from-emerald-500 to-blue-500",
     "from-blue-500 to-violet-500",
     "from-violet-500 to-orange-500",

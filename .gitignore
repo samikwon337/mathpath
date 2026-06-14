@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# collect-workbook drafts (examples/ 제외)
+/scripts/collect-workbook/drafts/*
+!/scripts/collect-workbook/drafts/.gitkeep

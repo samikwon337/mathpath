@@ -20,8 +20,21 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { LevelBadge } from "@/components/workbook/LevelBadge";
 import { getRoadmaps, getRoadmapSteps, getPublisherById } from "@/lib/api";
-import { DifficultyLevel, Roadmap } from "@/data/types";
+import {
+  DifficultyLevel,
+  Roadmap,
+  RoadmapStep,
+  Workbook,
+} from "@/data/types";
+import { roadmapGradeGroups, RoadmapGradeGroup } from "@/data/roadmaps";
 import { useAuthContext } from "@/hooks/auth-context";
+
+const COL_WIDTH = 240;
+const ROW_HEIGHT = 95;
+const GROUP_GAP = 48;
+const GROUP_PAD_X = 20;
+const GROUP_PAD_Y = 16;
+const GROUP_LABEL_H = 40;
 
 const LEVEL_BG: Record<DifficultyLevel, string> = {
   1: "#d1fae5",
@@ -75,38 +88,178 @@ function WorkbookNode({ data }: NodeProps) {
   );
 }
 
-const nodeTypes = { workbook: WorkbookNode };
+function GradeGroupNode({ data }: NodeProps) {
+  const d = data as {
+    label: string;
+    sublabel?: string;
+    width: number;
+    height: number;
+    bgColor: string;
+    borderColor: string;
+  };
 
-function RoadmapFlowChart({
-  roadmapId,
-  isLoggedIn,
-  getWorkbookStatus,
-  onNodeClick,
-}: {
-  roadmapId: string;
-  isLoggedIn: boolean;
-  getWorkbookStatus: (id: string) => { status: string } | undefined;
-  onNodeClick: (e: React.MouseEvent, node: Node) => void;
-}) {
-  const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
-    const steps = getRoadmapSteps(roadmapId);
-    const nodes: Node[] = [];
-    const edges: Edge[] = [];
+  return (
+    <div
+      className="rounded-xl pointer-events-none"
+      style={{
+        width: d.width,
+        height: d.height,
+        backgroundColor: d.bgColor,
+        border: `2px solid ${d.borderColor}`,
+      }}
+    >
+      <div
+        className="flex items-center gap-2 px-3 py-2 border-b"
+        style={{ borderColor: `${d.borderColor}40` }}
+      >
+        <span
+          className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold text-white"
+          style={{ backgroundColor: d.borderColor }}
+        >
+          {d.label}
+        </span>
+        {d.sublabel && (
+          <span className="text-xs font-medium" style={{ color: d.borderColor }}>
+            {d.sublabel}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
-    const stepGroups = new Map<number, typeof steps>();
-    for (const step of steps) {
-      const group = stepGroups.get(step.stepOrder) || [];
-      group.push(step);
-      stepGroups.set(step.stepOrder, group);
+const nodeTypes = { workbook: WorkbookNode, gradeGroup: GradeGroupNode };
+
+type EnrichedStep = RoadmapStep & { workbook: Workbook };
+
+function buildFlatFlow(
+  steps: EnrichedStep[],
+  isLoggedIn: boolean,
+  getWorkbookStatus: (id: string) => { status: string } | undefined
+) {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+
+  const stepGroups = new Map<number, EnrichedStep[]>();
+  for (const step of steps) {
+    const group = stepGroups.get(step.stepOrder) || [];
+    group.push(step);
+    stepGroups.set(step.stepOrder, group);
+  }
+
+  const sortedOrders = Array.from(stepGroups.keys()).sort((a, b) => a - b);
+
+  sortedOrders.forEach((order, colIndex) => {
+    const group = stepGroups.get(order) || [];
+    const mainSteps = group.filter((s) => !s.isOptional);
+    const optionalSteps = group.filter((s) => s.isOptional);
+    const allSteps = [...mainSteps, ...optionalSteps];
+
+    allSteps.forEach((step, rowIndex) => {
+      const publisher = getPublisherById(step.workbook.publisherId);
+      const userStatus = isLoggedIn ? getWorkbookStatus(step.workbookId) : undefined;
+
+      nodes.push({
+        id: step.id,
+        type: "workbook",
+        position: { x: colIndex * COL_WIDTH, y: rowIndex * ROW_HEIGHT },
+        data: {
+          label: step.workbook.title,
+          publisher: publisher?.name || "",
+          level: step.workbook.difficultyLevel as DifficultyLevel,
+          isOptional: step.isOptional,
+          note: step.note,
+          isCompleted: userStatus?.status === "completed",
+          workbookId: step.workbookId,
+        },
+      });
+
+      if (colIndex > 0) {
+        const prevOrder = sortedOrders[colIndex - 1];
+        const prevMainSteps = (stepGroups.get(prevOrder) || []).filter((s) => !s.isOptional);
+        if (prevMainSteps.length > 0) {
+          edges.push({
+            id: `e-${prevMainSteps[0].id}-${step.id}`,
+            source: prevMainSteps[0].id,
+            target: step.id,
+            animated: !step.isOptional,
+            style: {
+              stroke: step.isOptional ? "#94a3b8" : "#6366f1",
+              strokeDasharray: step.isOptional ? "5,5" : undefined,
+            },
+          });
+        }
+      }
+    });
+  });
+
+  return { nodes, edges, chartHeight: 400 };
+}
+
+function buildGroupedFlow(
+  steps: EnrichedStep[],
+  gradeGroups: RoadmapGradeGroup[],
+  isLoggedIn: boolean,
+  getWorkbookStatus: (id: string) => { status: string } | undefined
+) {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+  let groupOffsetX = 0;
+  let maxGroupHeight = 0;
+  let prevGroupLastMainStepId: string | null = null;
+
+  for (const gradeGroup of gradeGroups) {
+    const groupSteps = steps.filter((s) => gradeGroup.stepOrders.includes(s.stepOrder));
+    if (groupSteps.length === 0) continue;
+
+    const stepGroups = new Map<number, EnrichedStep[]>();
+    for (const step of groupSteps) {
+      const g = stepGroups.get(step.stepOrder) || [];
+      g.push(step);
+      stepGroups.set(step.stepOrder, g);
     }
 
-    const sortedOrders = Array.from(stepGroups.keys()).sort((a, b) => a - b);
+    const sortedOrders = gradeGroup.stepOrders.filter((o) => stepGroups.has(o));
+    let maxRows = 0;
+    for (const order of sortedOrders) {
+      maxRows = Math.max(maxRows, (stepGroups.get(order) || []).length);
+    }
 
-    sortedOrders.forEach((order, colIndex) => {
+    const groupWidth = sortedOrders.length * COL_WIDTH + GROUP_PAD_X * 2;
+    const groupHeight =
+      maxRows * ROW_HEIGHT + GROUP_PAD_Y * 2 + GROUP_LABEL_H;
+    maxGroupHeight = Math.max(maxGroupHeight, groupHeight);
+
+    nodes.push({
+      id: gradeGroup.id,
+      type: "gradeGroup",
+      position: { x: groupOffsetX, y: 0 },
+      zIndex: -1,
+      selectable: false,
+      draggable: false,
+      connectable: false,
+      focusable: false,
+      data: {
+        label: gradeGroup.label,
+        sublabel: gradeGroup.sublabel,
+        width: groupWidth,
+        height: groupHeight,
+        bgColor: gradeGroup.bgColor,
+        borderColor: gradeGroup.borderColor,
+      },
+    });
+
+    let groupLastMainStepId: string | null = null;
+
+    sortedOrders.forEach((order, localColIndex) => {
       const group = stepGroups.get(order) || [];
       const mainSteps = group.filter((s) => !s.isOptional);
       const optionalSteps = group.filter((s) => s.isOptional);
       const allSteps = [...mainSteps, ...optionalSteps];
+
+      if (mainSteps.length > 0) {
+        groupLastMainStepId = mainSteps[0].id;
+      }
 
       allSteps.forEach((step, rowIndex) => {
         const publisher = getPublisherById(step.workbook.publisherId);
@@ -115,23 +268,25 @@ function RoadmapFlowChart({
         nodes.push({
           id: step.id,
           type: "workbook",
-          position: { x: colIndex * 250, y: rowIndex * 100 },
+          position: {
+            x: groupOffsetX + GROUP_PAD_X + localColIndex * COL_WIDTH,
+            y: GROUP_PAD_Y + GROUP_LABEL_H + rowIndex * ROW_HEIGHT,
+          },
+          zIndex: 1,
           data: {
             label: step.workbook.title,
             publisher: publisher?.name || "",
             level: step.workbook.difficultyLevel as DifficultyLevel,
             isOptional: step.isOptional,
-            note: step.note,
+            note: step.note?.replace(/^\[[^\]]+\]\s*/, ""),
             isCompleted: userStatus?.status === "completed",
             workbookId: step.workbookId,
           },
         });
 
-        if (colIndex > 0) {
-          const prevOrder = sortedOrders[colIndex - 1];
-          const prevMainSteps = (stepGroups.get(prevOrder) || []).filter(
-            (s) => !s.isOptional
-          );
+        if (localColIndex > 0) {
+          const prevOrder = sortedOrders[localColIndex - 1];
+          const prevMainSteps = (stepGroups.get(prevOrder) || []).filter((s) => !s.isOptional);
           if (prevMainSteps.length > 0) {
             edges.push({
               id: `e-${prevMainSteps[0].id}-${step.id}`,
@@ -144,11 +299,44 @@ function RoadmapFlowChart({
               },
             });
           }
+        } else if (prevGroupLastMainStepId) {
+          edges.push({
+            id: `e-grp-${prevGroupLastMainStepId}-${step.id}`,
+            source: prevGroupLastMainStepId,
+            target: step.id,
+            animated: true,
+            style: { stroke: "#6366f1", strokeWidth: 2 },
+          });
         }
       });
     });
 
-    return { nodes, edges };
+    prevGroupLastMainStepId = groupLastMainStepId;
+    groupOffsetX += groupWidth + GROUP_GAP;
+  }
+
+  return { nodes, edges, chartHeight: Math.max(420, maxGroupHeight + 40) };
+}
+
+function RoadmapFlowChart({
+  roadmapId,
+  isLoggedIn,
+  getWorkbookStatus,
+  onNodeClick,
+}: {
+  roadmapId: string;
+  isLoggedIn: boolean;
+  getWorkbookStatus: (id: string) => { status: string } | undefined;
+  onNodeClick: (e: React.MouseEvent, node: Node) => void;
+}) {
+  const { nodes: initialNodes, edges: initialEdges, chartHeight } = useMemo(() => {
+    const steps = getRoadmapSteps(roadmapId);
+    const gradeGroups = roadmapGradeGroups[roadmapId];
+
+    if (gradeGroups) {
+      return buildGroupedFlow(steps, gradeGroups, isLoggedIn, getWorkbookStatus);
+    }
+    return buildFlatFlow(steps, isLoggedIn, getWorkbookStatus);
   }, [roadmapId, isLoggedIn, getWorkbookStatus]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -160,7 +348,10 @@ function RoadmapFlowChart({
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   return (
-    <div className="rounded-lg border bg-white dark:bg-gray-950 overflow-hidden" style={{ height: 400 }}>
+    <div
+      className="rounded-lg border bg-white dark:bg-gray-950 overflow-hidden"
+      style={{ height: chartHeight }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -168,8 +359,12 @@ function RoadmapFlowChart({
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={false}
         fitView
-        fitViewOptions={{ padding: 0.3 }}
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.3}
         proOptions={{ hideAttribution: true }}
       >
         <Background />
@@ -225,7 +420,8 @@ function RoadmapSection({
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      const data = node.data as { workbookId: string };
+      if (node.type !== "workbook") return;
+      const data = node.data as { workbookId?: string };
       if (data.workbookId) {
         router.push(`/workbooks/${data.workbookId}`);
       }
@@ -336,16 +532,29 @@ function RoadmapPageInner() {
           roadmapList={gradeRoadmaps}
           defaultTab={defaultGradeTab}
           renderDescription={(rm) => (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold">
                   {rm.targetStartLevel}등급
                 </span>
                 <span className="text-muted-foreground">&rarr;</span>
                 <span className="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 px-2.5 py-0.5 text-xs font-semibold">
-                  {rm.targetEndLevel}등급
+                  {rm.id === "rm-5to-top" ? "최상위" : `${rm.targetEndLevel}등급`}
                 </span>
               </div>
+              {rm.id === "rm-5to-top" && (
+                <div className="flex flex-wrap gap-1.5">
+                  {roadmapGradeGroups["rm-5to-top"]?.map((g) => (
+                    <span
+                      key={g.id}
+                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                      style={{ backgroundColor: g.borderColor }}
+                    >
+                      {g.label}
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">{rm.description}</p>
             </div>
           )}

@@ -1,0 +1,20 @@
+{
+  "id": "wb-example",
+  "publisherId": "pub-visang",
+  "subjectIds": ["sub-common1"],
+  "title": "완자 기출픽",
+  "subtitle": "2026년용",
+  "bookType": "past_exam",
+  "difficultyLevel": 2,
+  "targetAudience": "중위권",
+  "coverImageUrl": "https://contents.kyobobook.co.kr/...",
+  "summary": "공통수학1 내신 기출 대비 교재",
+  "description": "2022 개정 교육과정 공통수학1 범위의 중간·기말 기출을 수록한 교재입니다.",
+  "pros": ["기출 유형 분류가 체계적", "내신 대비에 적합"],
+  "cons": ["심화 문제는 부족"],
+  "recommendedFor": "공통수학1 내신 3~4등급 학생",
+  "purchaseUrlKyobo": "https://product.kyobobook.co.kr/detail/S000215651354",
+  "purchaseUrlYes24": "https://www.yes24.com/Product/Goods/000000000",
+  "tags": ["기출", "내신", "완자"],
+  "isActive": true
+}

@@ -1,7 +1,64 @@
 import { Roadmap, RoadmapStep } from "./types";
 
+export interface RoadmapGradeGroup {
+  id: string;
+  label: string;
+  sublabel?: string;
+  stepOrders: number[];
+  bgColor: string;
+  borderColor: string;
+}
+
+/** 등급 단위 그룹핑 (전체 여정 로드맵 등) */
+export const roadmapGradeGroups: Record<string, RoadmapGradeGroup[]> = {
+  "rm-5to-top": [
+    {
+      id: "grp-5",
+      label: "5등급",
+      sublabel: "기초 다지기",
+      stepOrders: [1, 2, 3, 4],
+      bgColor: "#ecfdf5",
+      borderColor: "#10b981",
+    },
+    {
+      id: "grp-3",
+      label: "3등급",
+      sublabel: "유형 완성",
+      stepOrders: [5, 6, 7, 8],
+      bgColor: "#eff6ff",
+      borderColor: "#3b82f6",
+    },
+    {
+      id: "grp-2",
+      label: "2등급",
+      sublabel: "심화 정복",
+      stepOrders: [9, 10, 11, 12],
+      bgColor: "#f5f3ff",
+      borderColor: "#8b5cf6",
+    },
+    {
+      id: "grp-top",
+      label: "최상위",
+      sublabel: "만점 목표",
+      stepOrders: [13, 14, 15],
+      bgColor: "#fff7ed",
+      borderColor: "#f97316",
+    },
+  ],
+};
+
 export const roadmaps: Roadmap[] = [
   // ── 등급별 로드맵 ──
+  {
+    id: "rm-5to-top",
+    name: "5등급 → 최상위 (전체 여정)",
+    description:
+      "5등급에서 출발해 최상위권(만점)까지 이어지는 마스터 로드맵. 기초→유형→심화→킬러까지 한눈에 확인하세요.",
+    type: "grade",
+    targetStartLevel: 5,
+    targetEndLevel: 1,
+    displayOrder: 0,
+  },
   {
     id: "rm-5to3",
     name: "5등급 → 3등급",
@@ -103,6 +160,29 @@ export const roadmaps: Roadmap[] = [
 ];
 
 export const roadmapSteps: RoadmapStep[] = [
+  // ── 5등급 → 최상위 (전체 여정) ──
+  { id: "rs-top-1", roadmapId: "rm-5to-top", workbookId: "wb-pungsanja", stepOrder: 1, isOptional: false, note: "[5등급] 개념 기초부터 시작" },
+  { id: "rs-top-1a", roadmapId: "rm-5to-top", workbookId: "wb-gaenyeomssen", stepOrder: 1, isOptional: true, note: "개념쎈도 대안으로 가능" },
+  { id: "rs-top-2", roadmapId: "rm-5to-top", workbookId: "wb-lightssen", stepOrder: 2, isOptional: false, note: "[5→4] 기본 유형 훈련" },
+  { id: "rs-top-2a", roadmapId: "rm-5to-top", workbookId: "wb-rpm", stepOrder: 2, isOptional: true, note: "RPM도 대안으로 가능" },
+  { id: "rs-top-3", roadmapId: "rm-5to-top", workbookId: "wb-ssen", stepOrder: 3, isOptional: false, note: "[4→3] A+B단계 집중" },
+  { id: "rs-top-4", roadmapId: "rm-5to-top", workbookId: "wb-jaistory", stepOrder: 4, isOptional: false, note: "[3등급] 기출로 마무리" },
+  { id: "rs-top-5", roadmapId: "rm-5to-top", workbookId: "wb-gaenyeomwonri", stepOrder: 5, isOptional: false, note: "[3→2] 개념 완전 정리" },
+  { id: "rs-top-6", roadmapId: "rm-5to-top", workbookId: "wb-ssen", stepOrder: 6, isOptional: false, note: "전체 유형 마스터 (A+B+C)" },
+  { id: "rs-top-6a", roadmapId: "rm-5to-top", workbookId: "wb-maple-synergy", stepOrder: 6, isOptional: true, note: "마플시너지도 대안" },
+  { id: "rs-top-7", roadmapId: "rm-5to-top", workbookId: "wb-ilpum", stepOrder: 7, isOptional: false, note: "심화 입문" },
+  { id: "rs-top-7a", roadmapId: "rm-5to-top", workbookId: "wb-gojjaengi", stepOrder: 7, isOptional: true, note: "고쟁이도 대안" },
+  { id: "rs-top-8", roadmapId: "rm-5to-top", workbookId: "wb-maple-gichul", stepOrder: 8, isOptional: false, note: "[2등급] 기출 분석" },
+  { id: "rs-top-9", roadmapId: "rm-5to-top", workbookId: "wb-jungseok-basic", stepOrder: 9, isOptional: false, note: "[2→1] 개념 깊이 확보" },
+  { id: "rs-top-10", roadmapId: "rm-5to-top", workbookId: "wb-blacklabel", stepOrder: 10, isOptional: false, note: "심화 문제 정복" },
+  { id: "rs-top-11", roadmapId: "rm-5to-top", workbookId: "wb-absolutegrade", stepOrder: 11, isOptional: false, note: "킬러급 문제 도전" },
+  { id: "rs-top-12", roadmapId: "rm-5to-top", workbookId: "wb-maple-gichul", stepOrder: 12, isOptional: false, note: "[1등급] 기출 3회독" },
+  { id: "rs-top-12a", roadmapId: "rm-5to-top", workbookId: "wb-jaistory", stepOrder: 12, isOptional: true, note: "자이스토리 병행" },
+  { id: "rs-top-13", roadmapId: "rm-5to-top", workbookId: "wb-jungseok-advanced", stepOrder: 13, isOptional: false, note: "[최상위] 실력편으로 심화 개념" },
+  { id: "rs-top-14", roadmapId: "rm-5to-top", workbookId: "wb-choigangtot", stepOrder: 14, isOptional: false, note: "최고 난이도 도전" },
+  { id: "rs-top-14a", roadmapId: "rm-5to-top", workbookId: "wb-mathgod", stepOrder: 14, isOptional: true, note: "수학의 신도 대안" },
+  { id: "rs-top-15", roadmapId: "rm-5to-top", workbookId: "wb-maple-gichul", stepOrder: 15, isOptional: false, note: "[만점] 기출 반복 + N제" },
+
   // ── 5등급 → 3등급 ──
   { id: "rs-1", roadmapId: "rm-5to3", workbookId: "wb-pungsanja", stepOrder: 1, isOptional: false, note: "개념 기초부터 시작" },
   { id: "rs-1a", roadmapId: "rm-5to3", workbookId: "wb-gaenyeomssen", stepOrder: 1, isOptional: true, note: "개념쎈도 대안으로 가능" },
