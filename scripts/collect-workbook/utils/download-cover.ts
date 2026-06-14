@@ -1,12 +1,19 @@
 import { mkdirSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
-import type { Workbook } from "../../src/data/types";
 import type { WorkbookDraft } from "../types";
 import { fetchKyoboProduct } from "../parsers/kyobo";
 import { fetchYes24Product } from "../parsers/yes24";
 import { parsePurchaseUrl } from "./parse-purchase-url";
 
 const COVERS_DIR = join(process.cwd(), "public/covers");
+
+type CoverDownloadInput = {
+  id: string;
+  title: string;
+  coverImageUrl?: string;
+  purchaseUrlKyobo?: string;
+  purchaseUrlYes24?: string;
+};
 
 export function coverFilenameFromPath(coverImageUrl: string): string {
   const name = coverImageUrl.replace(/^\/covers\//, "");
@@ -19,7 +26,7 @@ export function resolveLocalCoverPath(filename: string): string {
 }
 
 async function fetchRemoteCoverUrl(
-  wb: Pick<Workbook, "purchaseUrlKyobo" | "purchaseUrlYes24">
+  wb: Pick<CoverDownloadInput, "purchaseUrlKyobo" | "purchaseUrlYes24">
 ): Promise<string | undefined> {
   if (wb.purchaseUrlKyobo) {
     const { kyobo } = parsePurchaseUrl(wb.purchaseUrlKyobo);
@@ -58,7 +65,7 @@ export interface DownloadResult {
 }
 
 export async function downloadCoverForWorkbook(
-  wb: Pick<Workbook, "id" | "title" | "coverImageUrl" | "purchaseUrlKyobo" | "purchaseUrlYes24">
+  wb: CoverDownloadInput
 ): Promise<DownloadResult> {
   if (!wb.coverImageUrl?.startsWith("/covers/")) {
     return { id: wb.id, title: wb.title, filename: "", status: "skipped", message: "no local cover path" };
@@ -110,7 +117,7 @@ function sleep(ms: number) {
 }
 
 export async function downloadAllCovers(
-  items: Parameters<typeof downloadCoverForWorkbook>[0][],
+  items: CoverDownloadInput[],
   delayMs = 1500
 ): Promise<DownloadResult[]> {
   const results: DownloadResult[] = [];

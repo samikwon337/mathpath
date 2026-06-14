@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { validateSeedWorkbook } from "./validate-seed";
-import type { Workbook } from "../../src/data/types";
+import type { Workbook } from "../../../src/data/types";
 
 const base: Workbook = {
   id: "wb-test",

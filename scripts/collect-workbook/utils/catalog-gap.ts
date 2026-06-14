@@ -1,4 +1,4 @@
-import type { Workbook } from "../../src/data/types";
+import type { Workbook } from "../../../src/data/types";
 
 export interface PublisherGap {
   publisherId: string;

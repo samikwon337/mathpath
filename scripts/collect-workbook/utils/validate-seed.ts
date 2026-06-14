@@ -1,5 +1,5 @@
 import { existsSync } from "fs";
-import type { Workbook } from "../../src/data/types";
+import type { Workbook } from "../../../src/data/types";
 import { validateDraft, type ValidationIssue } from "./validate";
 import type { WorkbookDraft } from "../types";
 import { resolveLocalCoverPath, coverFilenameFromPath } from "./download-cover";
