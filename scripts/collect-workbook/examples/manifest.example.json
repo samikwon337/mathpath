@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "slug": "mirae-math",
+      "kyobo": "SEARCH_RESULT_KYOBO_ID",
+      "yes24": "SEARCH_RESULT_YES24_ID",
+      "out": "scripts/collect-workbook/drafts/mirae-math.json",
+      "overrides": {
+        "bookType": "type_basic",
+        "difficultyLevel": 2,
+        "subjectIds": [
+          "sub-common1",
+          "sub-common2",
+          "sub-algebra",
+          "sub-calculus1",
+          "sub-stats",
+          "sub-calculus2",
+          "sub-geometry"
+        ]
+      }
+    }
+  ]
+}

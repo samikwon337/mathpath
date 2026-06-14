@@ -43,6 +43,7 @@ MathPath 문제집 데이터 수집 CLI
   npm run collect -- download-covers --all
   npm run collect -- download-covers <draft.json>
   npm run collect -- validate-seed
+  npm run collect -- batch-build <manifest.json>
 
 예시:
   npm run collect -- search "완자 기출픽 공통수학1"
@@ -315,6 +316,46 @@ function printDownloadResults(results: Awaited<ReturnType<typeof downloadAllCove
   if (failed) process.exitCode = 1;
 }
 
+interface ManifestItem {
+  slug: string;
+  kyobo?: string;
+  yes24?: string;
+  aladin?: string;
+  out: string;
+  overrides?: MergeOverrides;
+}
+
+interface Manifest {
+  items: ManifestItem[];
+}
+
+async function cmdBatchBuild(manifestPath: string) {
+  const manifest = readJson<Manifest>(manifestPath);
+  for (let i = 0; i < manifest.items.length; i++) {
+    const item = manifest.items[i];
+    console.log(`\n[${i + 1}/${manifest.items.length}] ${item.slug}`);
+    const sources: StoreMetadata[] = [];
+    if (item.kyobo) {
+      sources.push(await fetchKyoboProduct(parseKyoboId(item.kyobo)));
+    }
+    if (item.yes24) {
+      sources.push(await fetchYes24Product(parseYes24Id(item.yes24)));
+    }
+    if (item.aladin) {
+      sources.push(await fetchAladinProduct(item.aladin));
+    }
+    if (!sources.length) {
+      console.warn("  소스 없음 — 스킵");
+      continue;
+    }
+    const draft = mergeToDraft(sources, item.overrides ?? {});
+    writeJson(item.out, draft);
+    if (i < manifest.items.length - 1) {
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+}
+
 async function cmdDownloadCovers(flags: Record<string, string>, draftPath?: string) {
   if (flags.all) {
     const active = workbooks.filter((w) => w.isActive);
@@ -366,6 +407,9 @@ async function main() {
         break;
       case "download-covers":
         await cmdDownloadCovers(flags, positional[0]);
+        break;
+      case "batch-build":
+        await cmdBatchBuild(positional[0]);
         break;
       case "help":
       default:
