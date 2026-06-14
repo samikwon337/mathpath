@@ -18,6 +18,10 @@ import { roadmapSteps } from "../../src/data/roadmaps";
 import { subjects } from "../../src/data/subjects";
 import { PUBLISHER_MIN_COUNTS } from "./config";
 import { analyzeCatalogGap, printCatalogGapReport } from "./utils/catalog-gap";
+import {
+  downloadAllCovers,
+  downloadCoverForDraft,
+} from "./utils/download-cover";
 import type { SearchResultItem, StoreMetadata, WorkbookDraft } from "./types";
 
 const DRAFTS_DIR = join(process.cwd(), "scripts/collect-workbook/drafts");
@@ -35,12 +39,16 @@ MathPath 문제집 데이터 수집 CLI
   npm run collect -- enrich <draft.json> [--emit-ts 파일.ts]
   npm run collect -- validate <draft.json>
   npm run collect -- catalog-gap
+  npm run collect -- download-covers --all
+  npm run collect -- download-covers <draft.json>
 
 예시:
   npm run collect -- search "완자 기출픽 공통수학1"
   npm run collect -- kyobo S000215651354
   npm run collect -- build --kyobo S000215651354 --yes24 1234567 --out drafts/wanja.json
   npm run collect -- enrich drafts/wanja.json --emit-ts drafts/wanja.ts
+  npm run collect -- download-covers --all
+  npm run collect -- download-covers scripts/collect-workbook/drafts/foo.json
 
 환경변수:
   ALADIN_TTB_KEY  알라딘 Open API 키 (선택, search/aladin 명령용)
@@ -288,6 +296,33 @@ function cmdCatalogGap() {
   process.exitCode = printCatalogGapReport(report);
 }
 
+function printDownloadResults(results: Awaited<ReturnType<typeof downloadAllCovers>>) {
+  let failed = 0;
+  for (const r of results) {
+    const icon = r.status === "ok" ? "✓" : r.status === "skipped" ? "-" : "✗";
+    console.log(`${icon} ${r.id} (${r.title})${r.message ? `: ${r.message}` : ""}`);
+    if (r.status === "failed") failed++;
+  }
+  if (failed) process.exitCode = 1;
+}
+
+async function cmdDownloadCovers(flags: Record<string, string>, draftPath?: string) {
+  if (flags.all) {
+    const active = workbooks.filter((w) => w.isActive);
+    console.log(`표지 다운로드: ${active.length}권\n`);
+    const results = await downloadAllCovers(active);
+    printDownloadResults(results);
+    return;
+  }
+  if (draftPath) {
+    const draft = readJson<WorkbookDraft>(draftPath);
+    const result = await downloadCoverForDraft(draft);
+    printDownloadResults([result]);
+    return;
+  }
+  throw new Error("--all 또는 draft.json 경로가 필요합니다");
+}
+
 async function main() {
   const { command, flags, positional } = parseArgs(process.argv.slice(2));
 
@@ -316,6 +351,9 @@ async function main() {
         break;
       case "catalog-gap":
         cmdCatalogGap();
+        break;
+      case "download-covers":
+        await cmdDownloadCovers(flags, positional[0]);
         break;
       case "help":
       default:
