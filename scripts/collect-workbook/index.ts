@@ -8,6 +8,7 @@ import type { MergeOverrides } from "./utils/merge-draft";
 import { mergeToDraft } from "./utils/merge-draft";
 import { formatWorkbookTs } from "./utils/format-ts";
 import { validateDraft, printValidation } from "./utils/validate";
+import { validateAllSeedWorkbooks } from "./utils/validate-seed";
 import {
   isDuplicateTitle,
   loadExistingWorkbookIds,
@@ -41,6 +42,7 @@ MathPath 문제집 데이터 수집 CLI
   npm run collect -- catalog-gap
   npm run collect -- download-covers --all
   npm run collect -- download-covers <draft.json>
+  npm run collect -- validate-seed
 
 예시:
   npm run collect -- search "완자 기출픽 공통수학1"
@@ -284,6 +286,13 @@ function cmdValidate(draftPath: string) {
   if (!ok) process.exitCode = 1;
 }
 
+function cmdValidateSeed() {
+  console.log(`시드 검증: workbooks.ts (${workbooks.filter((w) => w.isActive).length}권)\n`);
+  const issues = validateAllSeedWorkbooks(workbooks);
+  const ok = printValidation(issues);
+  if (!ok) process.exitCode = 1;
+}
+
 function cmdCatalogGap() {
   const subjectNames = Object.fromEntries(subjects.map((s) => [s.id, s.name]));
   const roadmapWorkbookIds = roadmapSteps.map((s) => s.workbookId);
@@ -351,6 +360,9 @@ async function main() {
         break;
       case "catalog-gap":
         cmdCatalogGap();
+        break;
+      case "validate-seed":
+        cmdValidateSeed();
         break;
       case "download-covers":
         await cmdDownloadCovers(flags, positional[0]);
