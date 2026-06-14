@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "collect": "tsx scripts/collect-workbook/index.ts",
-    "test:collect": "tsx --test scripts/collect-workbook/utils/*.test.ts"
+    "test:collect": "tsx --test scripts/collect-workbook/utils/*.test.ts",
+    "test:roadmap": "tsx --test src/lib/roadmap-timeline.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

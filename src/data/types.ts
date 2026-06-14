@@ -76,6 +76,8 @@ export interface RoadmapStep {
   stepOrder: number;
   isOptional: boolean;
   note?: string;
+  /** 하루 2시간 기준 예상 학습 일수 */
+  estimatedStudyDays?: number;
 }
 
 export type WorkbookStatus = "planned" | "in_progress" | "completed";

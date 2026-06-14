@@ -28,6 +28,10 @@ import {
 } from "@/data/types";
 import { roadmapGradeGroups, RoadmapGradeGroup } from "@/data/roadmaps";
 import { useAuthContext } from "@/hooks/auth-context";
+import { useStudyHoursPerDay } from "@/hooks/use-study-hours-per-day";
+import { RoadmapTimeline } from "@/components/roadmap/RoadmapTimeline";
+import { StudyHoursControl } from "@/components/roadmap/StudyHoursControl";
+import { getStepDuration } from "@/lib/roadmap-timeline";
 
 const COL_WIDTH = 240;
 const ROW_HEIGHT = 95;
@@ -61,6 +65,7 @@ function WorkbookNode({ data }: NodeProps) {
     note?: string;
     isCompleted?: boolean;
     workbookId: string;
+    durationWeeks?: number;
   };
 
   return (
@@ -82,6 +87,11 @@ function WorkbookNode({ data }: NodeProps) {
       )}
       <div className="text-sm font-semibold">{d.label}</div>
       <div className="text-[10px] text-gray-600 mt-0.5">{d.publisher}</div>
+      {d.durationWeeks != null && (
+        <div className="text-[10px] font-medium text-indigo-600 mt-0.5">
+          약 {d.durationWeeks}주
+        </div>
+      )}
       {d.note && <div className="text-[10px] text-gray-500 mt-1">{d.note}</div>}
       {d.isOptional && <div className="text-[9px] text-gray-400 mt-0.5">(선택)</div>}
     </div>
@@ -135,7 +145,8 @@ type EnrichedStep = RoadmapStep & { workbook: Workbook };
 function buildFlatFlow(
   steps: EnrichedStep[],
   isLoggedIn: boolean,
-  getWorkbookStatus: (id: string) => { status: string } | undefined
+  getWorkbookStatus: (id: string) => { status: string } | undefined,
+  hoursPerDay: number
 ) {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
@@ -158,6 +169,7 @@ function buildFlatFlow(
     allSteps.forEach((step, rowIndex) => {
       const publisher = getPublisherById(step.workbook.publisherId);
       const userStatus = isLoggedIn ? getWorkbookStatus(step.workbookId) : undefined;
+      const duration = getStepDuration(step, step.workbook, hoursPerDay);
 
       nodes.push({
         id: step.id,
@@ -171,6 +183,7 @@ function buildFlatFlow(
           note: step.note,
           isCompleted: userStatus?.status === "completed",
           workbookId: step.workbookId,
+          durationWeeks: duration.weeks,
         },
       });
 
@@ -200,7 +213,8 @@ function buildGroupedFlow(
   steps: EnrichedStep[],
   gradeGroups: RoadmapGradeGroup[],
   isLoggedIn: boolean,
-  getWorkbookStatus: (id: string) => { status: string } | undefined
+  getWorkbookStatus: (id: string) => { status: string } | undefined,
+  hoursPerDay: number
 ) {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
@@ -264,6 +278,7 @@ function buildGroupedFlow(
       allSteps.forEach((step, rowIndex) => {
         const publisher = getPublisherById(step.workbook.publisherId);
         const userStatus = isLoggedIn ? getWorkbookStatus(step.workbookId) : undefined;
+        const duration = getStepDuration(step, step.workbook, hoursPerDay);
 
         nodes.push({
           id: step.id,
@@ -281,6 +296,7 @@ function buildGroupedFlow(
             note: step.note?.replace(/^\[[^\]]+\]\s*/, ""),
             isCompleted: userStatus?.status === "completed",
             workbookId: step.workbookId,
+            durationWeeks: duration.weeks,
           },
         });
 
@@ -323,21 +339,29 @@ function RoadmapFlowChart({
   isLoggedIn,
   getWorkbookStatus,
   onNodeClick,
+  hoursPerDay,
 }: {
   roadmapId: string;
   isLoggedIn: boolean;
   getWorkbookStatus: (id: string) => { status: string } | undefined;
   onNodeClick: (e: React.MouseEvent, node: Node) => void;
+  hoursPerDay: number;
 }) {
   const { nodes: initialNodes, edges: initialEdges, chartHeight } = useMemo(() => {
     const steps = getRoadmapSteps(roadmapId);
     const gradeGroups = roadmapGradeGroups[roadmapId];
 
     if (gradeGroups) {
-      return buildGroupedFlow(steps, gradeGroups, isLoggedIn, getWorkbookStatus);
+      return buildGroupedFlow(
+        steps,
+        gradeGroups,
+        isLoggedIn,
+        getWorkbookStatus,
+        hoursPerDay
+      );
     }
-    return buildFlatFlow(steps, isLoggedIn, getWorkbookStatus);
-  }, [roadmapId, isLoggedIn, getWorkbookStatus]);
+    return buildFlatFlow(steps, isLoggedIn, getWorkbookStatus, hoursPerDay);
+  }, [roadmapId, isLoggedIn, getWorkbookStatus, hoursPerDay]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -409,14 +433,59 @@ function RoadmapSection({
   roadmapList,
   defaultTab,
   renderDescription,
+  enableTimeline = false,
+  hoursPerDay,
+  onHoursChange,
+  defaultView = "timeline",
 }: {
   roadmapList: Roadmap[];
   defaultTab: string;
   renderDescription: (rm: Roadmap) => React.ReactNode;
+  enableTimeline?: boolean;
+  hoursPerDay: number;
+  onHoursChange: (hours: number) => void;
+  defaultView?: "timeline" | "flow";
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoggedIn, getWorkbookStatus } = useAuthContext();
   const [currentTab, setCurrentTab] = useState(defaultTab);
+  const viewParam = searchParams.get("view");
+  const [viewMode, setViewMode] = useState<"timeline" | "flow">(
+    viewParam === "flow" || viewParam === "timeline"
+      ? viewParam
+      : defaultView
+  );
+
+  useEffect(() => {
+    if (viewParam === "flow" || viewParam === "timeline") {
+      setViewMode(viewParam);
+    }
+  }, [viewParam]);
+
+  const setView = useCallback(
+    (view: "timeline" | "flow") => {
+      setViewMode(view);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("view", view);
+      params.set("tab", currentTab);
+      router.replace(`/roadmap?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams, currentTab]
+  );
+
+  const onTabChange = useCallback(
+    (tabId: string) => {
+      setCurrentTab(tabId);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tabId);
+      if (enableTimeline) {
+        params.set("view", viewMode);
+      }
+      router.replace(`/roadmap?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams, enableTimeline, viewMode]
+  );
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -436,7 +505,7 @@ function RoadmapSection({
         {roadmapList.map((rm) => (
           <button
             key={rm.id}
-            onClick={() => setCurrentTab(rm.id)}
+            onClick={() => onTabChange(rm.id)}
             className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               currentTab === rm.id
                 ? "bg-background text-foreground shadow-sm"
@@ -458,13 +527,62 @@ function RoadmapSection({
               </CardContent>
             </Card>
 
-            <RoadmapFlowChart
-              key={rm.id}
-              roadmapId={rm.id}
-              isLoggedIn={isLoggedIn}
-              getWorkbookStatus={getWorkbookStatus}
-              onNodeClick={onNodeClick}
-            />
+            {enableTimeline && (
+              <div className="inline-flex gap-1 rounded-lg bg-muted p-[3px] mb-4">
+                <button
+                  type="button"
+                  onClick={() => setView("timeline")}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    viewMode === "timeline"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  타임라인
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("flow")}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    viewMode === "flow"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  플로우
+                </button>
+              </div>
+            )}
+
+            {enableTimeline && viewMode === "timeline" ? (
+              <RoadmapTimeline
+                roadmapId={rm.id}
+                roadmapName={rm.name}
+                hoursPerDay={hoursPerDay}
+                onHoursChange={onHoursChange}
+                isLoggedIn={isLoggedIn}
+                getWorkbookStatus={getWorkbookStatus}
+              />
+            ) : (
+              <>
+                {enableTimeline && (
+                  <div className="mb-4">
+                    <StudyHoursControl
+                      hoursPerDay={hoursPerDay}
+                      onChange={onHoursChange}
+                    />
+                  </div>
+                )}
+                <RoadmapFlowChart
+                  key={`${rm.id}-${hoursPerDay}`}
+                  roadmapId={rm.id}
+                  isLoggedIn={isLoggedIn}
+                  getWorkbookStatus={getWorkbookStatus}
+                  onNodeClick={onNodeClick}
+                  hoursPerDay={hoursPerDay}
+                />
+              </>
+            )}
 
             <RoadmapLegend isLoggedIn={isLoggedIn} />
           </div>
@@ -479,6 +597,7 @@ import { Suspense } from "react";
 function RoadmapPageInner() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
+  const { hoursPerDay, setHoursPerDay } = useStudyHoursPerDay();
 
   const gradeRoadmaps = getRoadmaps("grade");
   const publisherRoadmaps = getRoadmaps("publisher");
@@ -531,6 +650,10 @@ function RoadmapPageInner() {
         <RoadmapSection
           roadmapList={gradeRoadmaps}
           defaultTab={defaultGradeTab}
+          enableTimeline
+          hoursPerDay={hoursPerDay}
+          onHoursChange={setHoursPerDay}
+          defaultView="timeline"
           renderDescription={(rm) => (
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1.5">
@@ -565,6 +688,8 @@ function RoadmapPageInner() {
         <RoadmapSection
           roadmapList={publisherRoadmaps}
           defaultTab={defaultPublisherTab}
+          hoursPerDay={hoursPerDay}
+          onHoursChange={setHoursPerDay}
           renderDescription={(rm) => {
             const publisher = rm.publisherId ? getPublisherById(rm.publisherId) : null;
             return (
