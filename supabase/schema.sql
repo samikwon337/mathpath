@@ -5,7 +5,7 @@
 
 -- 1. 출판사
 CREATE TABLE publishers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   logo_url TEXT,
   website_url TEXT,
@@ -14,7 +14,7 @@ CREATE TABLE publishers (
 
 -- 2. 과목
 CREATE TABLE subjects (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('common', 'general', 'career')),
   display_order INT NOT NULL
@@ -22,8 +22,8 @@ CREATE TABLE subjects (
 
 -- 3. 문제집
 CREATE TABLE workbooks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  publisher_id UUID REFERENCES publishers(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,
+  publisher_id TEXT REFERENCES publishers(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   subtitle TEXT,
   book_type TEXT NOT NULL CHECK (book_type IN ('concept', 'type_basic', 'type_advanced', 'deep', 'past_exam')),
@@ -41,6 +41,7 @@ CREATE TABLE workbooks (
   purchase_url_kyobo TEXT,
   purchase_url_yes24 TEXT,
   tags JSONB DEFAULT '[]',
+  study_tips JSONB DEFAULT '[]',
   is_active BOOLEAN DEFAULT true,
   avg_rating NUMERIC(2,1) DEFAULT 0.0,
   review_count INT DEFAULT 0,
@@ -49,16 +50,16 @@ CREATE TABLE workbooks (
 
 -- 4. 문제집-과목 매핑 (다대다)
 CREATE TABLE workbook_subjects (
-  workbook_id UUID REFERENCES workbooks(id) ON DELETE CASCADE,
-  subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
+  workbook_id TEXT REFERENCES workbooks(id) ON DELETE CASCADE,
+  subject_id TEXT REFERENCES subjects(id) ON DELETE CASCADE,
   PRIMARY KEY (workbook_id, subject_id)
 );
 
 -- 5. 문제집 간 관계
 CREATE TABLE workbook_relations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  from_workbook_id UUID REFERENCES workbooks(id) ON DELETE CASCADE,
-  to_workbook_id UUID REFERENCES workbooks(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,
+  from_workbook_id TEXT REFERENCES workbooks(id) ON DELETE CASCADE,
+  to_workbook_id TEXT REFERENCES workbooks(id) ON DELETE CASCADE,
   relation_type TEXT NOT NULL CHECK (relation_type IN ('next_step', 'complement', 'alternative')),
   note TEXT,
   display_order INT DEFAULT 0
@@ -66,21 +67,22 @@ CREATE TABLE workbook_relations (
 
 -- 6. 유튜브 리뷰 링크
 CREATE TABLE workbook_youtube_links (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  workbook_id UUID REFERENCES workbooks(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,
+  workbook_id TEXT REFERENCES workbooks(id) ON DELETE CASCADE,
   youtube_url TEXT NOT NULL,
   channel_name TEXT,
   video_title TEXT,
+  display_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- 7. 추천 로드맵
 CREATE TABLE roadmaps (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
   type TEXT NOT NULL CHECK (type IN ('grade', 'publisher')),
-  publisher_id UUID REFERENCES publishers(id) ON DELETE SET NULL,
+  publisher_id TEXT REFERENCES publishers(id) ON DELETE SET NULL,
   target_start_level INT,
   target_end_level INT,
   display_order INT DEFAULT 0
@@ -88,12 +90,13 @@ CREATE TABLE roadmaps (
 
 -- 8. 로드맵 단계
 CREATE TABLE roadmap_steps (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  roadmap_id UUID REFERENCES roadmaps(id) ON DELETE CASCADE,
-  workbook_id UUID REFERENCES workbooks(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,
+  roadmap_id TEXT REFERENCES roadmaps(id) ON DELETE CASCADE,
+  workbook_id TEXT REFERENCES workbooks(id) ON DELETE CASCADE,
   step_order INT NOT NULL,
   is_optional BOOLEAN DEFAULT false,
-  note TEXT
+  note TEXT,
+  estimated_study_days INT
 );
 
 -- 9. 사용자 프로필 (Supabase Auth 연동)
@@ -112,7 +115,7 @@ CREATE TABLE profiles (
 CREATE TABLE user_workbooks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  workbook_id UUID REFERENCES workbooks(id) ON DELETE CASCADE,
+  workbook_id TEXT REFERENCES workbooks(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned', 'in_progress', 'completed')),
   started_at DATE,
   completed_at DATE,
@@ -130,7 +133,7 @@ CREATE TABLE user_workbooks (
 -- 11. 문제집 리뷰
 CREATE TABLE workbook_reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  workbook_id UUID REFERENCES workbooks(id) ON DELETE CASCADE NOT NULL,
+  workbook_id TEXT REFERENCES workbooks(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
   difficulty_felt TEXT CHECK (difficulty_felt IN ('easy', 'moderate', 'hard')),
@@ -258,7 +261,7 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 CREATE OR REPLACE FUNCTION public.update_workbook_rating()
 RETURNS TRIGGER AS $$
 DECLARE
-  target_workbook_id UUID;
+  target_workbook_id TEXT;
 BEGIN
   IF TG_OP = 'DELETE' THEN
     target_workbook_id := OLD.workbook_id;
