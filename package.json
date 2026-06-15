@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "collect": "tsx scripts/collect-workbook/index.ts",
+    "seed": "tsx scripts/collect-workbook/index.ts seed",
     "test:collect": "tsx --test scripts/collect-workbook/utils/*.test.ts",
     "test:roadmap": "tsx --test src/lib/roadmap-timeline.test.ts"
   },
