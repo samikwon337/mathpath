@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { LevelBadge } from "./LevelBadge";
 import { BookTypeBadge } from "./BookTypeBadge";
 import { WorkbookCoverPlaceholder } from "./WorkbookCoverPlaceholder";
-import { getWorkbooks, getPublisherById } from "@/lib/api";
+import { filterWorkbooks } from "@/lib/transform";
 import { BookType, DifficultyLevel } from "@/data/types";
+import type { Workbook, Publisher } from "@/data/types";
 
 type GradeChoice = "1-2" | "3" | "4-5";
 type NeedChoice = "concept" | "type" | "advanced" | "past_exam";
@@ -77,7 +78,12 @@ function getRecommendFilters(
   return { levels: [1, 2, 3], bookTypes: ["concept", "type_basic"] };
 }
 
-export function QuickRecommend() {
+interface QuickRecommendProps {
+  workbooks: Workbook[];
+  publishers: Publisher[];
+}
+
+export function QuickRecommend({ workbooks, publishers }: QuickRecommendProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [grade, setGrade] = useState<GradeChoice | null>(null);
   const [need, setNeed] = useState<NeedChoice | null>(null);
@@ -87,10 +93,10 @@ export function QuickRecommend() {
     const { levels, bookTypes } = getRecommendFilters(grade, need);
 
     // Gather workbooks matching any of the level+bookType combos
-    const results = new Map<string, ReturnType<typeof getWorkbooks>[number]>();
+    const results = new Map<string, Workbook>();
     for (const level of levels) {
       for (const bookType of bookTypes) {
-        const books = getWorkbooks({
+        const books = filterWorkbooks(workbooks, publishers, {
           difficultyLevel: level,
           bookType,
           sort: "name",
@@ -104,7 +110,7 @@ export function QuickRecommend() {
     }
 
     return Array.from(results.values()).slice(0, 5);
-  }, [grade, need]);
+  }, [grade, need, workbooks, publishers]);
 
   const handleGradeSelect = (value: GradeChoice) => {
     setGrade(value);
@@ -229,7 +235,9 @@ export function QuickRecommend() {
           {recommendations.length > 0 ? (
             <div className="grid gap-2">
               {recommendations.map((book) => {
-                const publisher = getPublisherById(book.publisherId);
+                const publisher = publishers.find(
+                  (p) => p.id === book.publisherId
+                );
                 return (
                   <Link key={book.id} href={`/workbooks/${book.id}`}>
                     <div className="flex items-center gap-3 rounded-lg bg-white/80 dark:bg-slate-800/80 border p-3 hover:shadow-md transition-all hover:-translate-y-0.5">

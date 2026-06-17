@@ -328,6 +328,7 @@ export function WorkbookBrowser({
       {/* Compare dialog */}
       <WorkbookCompare
         workbooks={compareWorkbooks}
+        publishers={publishers}
         open={compareOpen}
         onOpenChange={setCompareOpen}
       />

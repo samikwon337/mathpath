@@ -40,10 +40,12 @@ export interface HomeViewProps {
 
 function MyRoadmapSection({
   workbooksById,
+  publishers,
   publisherName,
   relations,
 }: {
   workbooksById: Map<string, Workbook>;
+  publishers: Publisher[];
   publisherName: (id: string) => string;
   relations: WorkbookRelation[];
 }) {
@@ -124,6 +126,7 @@ function MyRoadmapSection({
         myNodes={nodes}
         myEdges={edges}
         suggestedNext={suggestedNext.slice(0, 2)}
+        publishers={publishers}
         height={Math.max(300, nodes.length * 60 + 100)}
       />
 
@@ -391,6 +394,7 @@ export function HomeView({ workbooks, publishers, relations, roadmaps }: HomeVie
       {isLoggedIn && (
         <MyRoadmapSection
           workbooksById={workbooksById}
+          publishers={publishers}
           publisherName={publisherName}
           relations={relations}
         />
@@ -408,7 +412,7 @@ export function HomeView({ workbooks, publishers, relations, roadmaps }: HomeVie
       </section>
 
       {/* Quick Recommendation Quiz */}
-      <QuickRecommend />
+      <QuickRecommend workbooks={workbooks} publishers={publishers} />
 
       {/* Quick Access: Difficulty Levels */}
       <section>
