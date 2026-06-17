@@ -1,18 +1,6 @@
-"use client";
-
-import { use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  ExternalLink,
-  ThumbsUp,
-  ThumbsDown,
-  ChevronRight,
-  BookOpen,
-  Lightbulb,
-  Video,
-} from "lucide-react";
+import { notFound } from "next/navigation";
+import { ExternalLink, ThumbsUp, ThumbsDown, ChevronRight, BookOpen, Lightbulb, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,53 +8,36 @@ import { Separator } from "@/components/ui/separator";
 import { LevelBadge } from "@/components/workbook/LevelBadge";
 import { BookTypeBadge } from "@/components/workbook/BookTypeBadge";
 import { WorkbookCoverPlaceholder } from "@/components/workbook/WorkbookCoverPlaceholder";
-import { StatusToggle } from "@/components/workbook/StatusToggle";
 import { WorkbookCard } from "@/components/workbook/WorkbookCard";
 import {
-  getWorkbookById,
-  getPublisherById,
-  getWorkbookRelations,
-  getWorkbooksByPublisher,
-  getYoutubeLinksByWorkbookId,
-} from "@/lib/api";
-import { useAuthContext } from "@/hooks/auth-context";
+  getWorkbookById, getPublisherById, getWorkbookRelations,
+  getWorkbooksByPublisher, getYoutubeLinksByWorkbookId,
+} from "@/lib/db/catalog";
 import { DifficultyLevel } from "@/data/types";
-import { notFound } from "next/navigation";
+import { WorkbookStatusControl } from "./WorkbookStatusControl";
+import { BackButton } from "./BackButton";
 
-export default function WorkbookDetailPage({
+export default async function WorkbookDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
-  const router = useRouter();
-  const { isLoggedIn, getWorkbookStatus, updateWorkbookStatus, removeWorkbook } =
-    useAuthContext();
+  const { id } = await params;
+  const workbook = await getWorkbookById(id);
+  if (!workbook) notFound();
 
-  const workbook = getWorkbookById(id);
-  if (!workbook) return notFound();
-
-  const publisher = getPublisherById(workbook.publisherId);
-  const relations = getWorkbookRelations(id);
-  const publisherWorkbooks = getWorkbooksByPublisher(workbook.publisherId).filter(
-    (w) => w.id !== id
-  );
-  const userStatus = isLoggedIn ? getWorkbookStatus(id) : undefined;
-
-  const youtubeLinks = getYoutubeLinksByWorkbookId(id);
+  const [publisher, relations, publisherWorkbooksAll, youtubeLinks] = await Promise.all([
+    getPublisherById(workbook.publisherId),
+    getWorkbookRelations(id),
+    getWorkbooksByPublisher(workbook.publisherId),
+    getYoutubeLinksByWorkbookId(id),
+  ]);
+  const publisherWorkbooks = publisherWorkbooksAll.filter((w) => w.id !== id);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       {/* Back */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => router.back()}
-        className="mb-4 gap-1 -ml-2"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        뒤로
-      </Button>
+      <BackButton />
 
       <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
         {/* Cover + Actions */}
@@ -80,17 +51,7 @@ export default function WorkbookDetailPage({
           />
 
           {/* Auth Actions */}
-          {isLoggedIn && (
-            <div className="flex justify-center">
-              <StatusToggle
-                status={userStatus?.status}
-                onStatusChange={(s) => updateWorkbookStatus(id, s)}
-                onAdd={() => updateWorkbookStatus(id, "planned")}
-                onRemove={() => removeWorkbook(id)}
-                size="md"
-              />
-            </div>
-          )}
+          <WorkbookStatusControl workbookId={id} />
 
           {/* Purchase Links */}
           <div className="space-y-2">
@@ -340,7 +301,7 @@ export default function WorkbookDetailPage({
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {publisherWorkbooks.slice(0, 4).map((wb) => (
-                    <WorkbookCard key={wb.id} workbook={wb} />
+                    <WorkbookCard key={wb.id} workbook={wb} publisherName={publisher?.name} />
                   ))}
                 </div>
               </div>

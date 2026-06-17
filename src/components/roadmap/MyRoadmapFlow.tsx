@@ -17,8 +17,8 @@ import "@xyflow/react/dist/style.css";
 import { useRouter } from "next/navigation";
 import { CheckCircle, BookOpen, ClipboardList, Plus } from "lucide-react";
 import { DifficultyLevel, WorkbookStatus } from "@/data/types";
-import { MyRoadmapNode as MyRoadmapNodeData } from "@/lib/api";
-import { getPublisherById } from "@/lib/api";
+import type { Publisher } from "@/data/types";
+import { MyRoadmapNode as MyRoadmapNodeData } from "@/lib/transform";
 
 const LEVEL_BG: Record<DifficultyLevel, string> = {
   1: "#d1fae5",
@@ -152,16 +152,20 @@ export function MyRoadmapFlow({
   myNodes,
   myEdges,
   suggestedNext,
+  publishers,
   height = 350,
 }: {
   myNodes: MyRoadmapNodeData[];
   myEdges: { from: string; to: string; type: string; note?: string }[];
   suggestedNext: { id: string; title: string; publisherId: string; difficultyLevel: number; reason: string }[];
+  publishers: Publisher[];
   height?: number;
 }) {
   const router = useRouter();
 
   const { nodes: flowNodes, edges: flowEdges } = useMemo(() => {
+    const getPublisherById = (id: string) =>
+      publishers.find((p) => p.id === id);
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -260,7 +264,7 @@ export function MyRoadmapFlow({
     }
 
     return { nodes, edges };
-  }, [myNodes, myEdges, suggestedNext]);
+  }, [myNodes, myEdges, suggestedNext, publishers]);
 
   const [nodes, , onNodesChange] = useNodesState(flowNodes);
   const [edges, , onEdgesChange] = useEdgesState(flowEdges);

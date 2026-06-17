@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Workbook, DifficultyLevel } from "@/data/types";
-import { getPublisherById } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { LevelBadge } from "./LevelBadge";
 import { BookTypeBadge } from "./BookTypeBadge";
@@ -10,17 +9,17 @@ import { WorkbookCoverPlaceholder } from "./WorkbookCoverPlaceholder";
 
 interface WorkbookCardProps {
   workbook: Workbook;
+  publisherName?: string;
   onCompareToggle?: (workbookId: string) => void;
   isCompared?: boolean;
 }
 
 export function WorkbookCard({
   workbook,
+  publisherName,
   onCompareToggle,
   isCompared,
 }: WorkbookCardProps) {
-  const publisher = getPublisherById(workbook.publisherId);
-
   return (
     <Link href={`/workbooks/${workbook.id}`}>
       <Card
@@ -50,7 +49,7 @@ export function WorkbookCard({
         )}
         <WorkbookCoverPlaceholder
           title={workbook.title}
-          publisher={publisher?.name || ""}
+          publisher={publisherName || ""}
           level={workbook.difficultyLevel as DifficultyLevel}
           coverImageUrl={workbook.coverImageUrl}
           className="aspect-[3/4]"
@@ -64,7 +63,7 @@ export function WorkbookCard({
             {workbook.title}
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {publisher?.name}
+            {publisherName}
           </p>
           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
             {workbook.summary}

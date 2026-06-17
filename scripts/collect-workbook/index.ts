@@ -23,6 +23,8 @@ import {
   downloadAllCovers,
   downloadCoverForDraft,
 } from "./utils/download-cover";
+import { createAdminClient } from "./utils/supabase-admin";
+import { seedAll } from "./utils/seed-supabase";
 import type { SearchResultItem, StoreMetadata, WorkbookDraft } from "./types";
 
 const DRAFTS_DIR = join(process.cwd(), "scripts/collect-workbook/drafts");
@@ -43,6 +45,7 @@ MathPath 문제집 데이터 수집 CLI
   npm run collect -- download-covers --all
   npm run collect -- download-covers <draft.json>
   npm run collect -- validate-seed
+  npm run collect -- seed                                 # src/data → Supabase upsert
   npm run collect -- batch-build <manifest.json>
 
 예시:
@@ -294,6 +297,13 @@ function cmdValidateSeed() {
   if (!ok) process.exitCode = 1;
 }
 
+async function cmdSeed() {
+  console.log("Supabase 시딩 시작 (src/data → DB)\n");
+  const sb = createAdminClient();
+  await seedAll(sb);
+  console.log("\n시딩 완료.");
+}
+
 function cmdCatalogGap() {
   const subjectNames = Object.fromEntries(subjects.map((s) => [s.id, s.name]));
   const roadmapWorkbookIds = roadmapSteps.map((s) => s.workbookId);
@@ -404,6 +414,9 @@ async function main() {
         break;
       case "validate-seed":
         cmdValidateSeed();
+        break;
+      case "seed":
+        await cmdSeed();
         break;
       case "download-covers":
         await cmdDownloadCovers(flags, positional[0]);
