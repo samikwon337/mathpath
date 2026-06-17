@@ -1,15 +1,15 @@
 import { supabase } from "@/lib/supabase";
 import type { UserWorkbook, WorkbookStatus, Profile } from "@/data/types";
 
-function mapUserWorkbook(r: Record<string, any>): UserWorkbook {
+function mapUserWorkbook(r: Record<string, unknown>): UserWorkbook {
   return {
-    id: r.id,
-    userId: r.user_id,
-    workbookId: r.workbook_id,
-    status: r.status,
-    startedAt: r.started_at ?? undefined,
-    completedAt: r.completed_at ?? undefined,
-    note: r.note ?? undefined,
+    id: r.id as string,
+    userId: r.user_id as string,
+    workbookId: r.workbook_id as string,
+    status: r.status as WorkbookStatus,
+    startedAt: (r.started_at as string | null) ?? undefined,
+    completedAt: (r.completed_at as string | null) ?? undefined,
+    note: (r.note as string | null) ?? undefined,
   };
 }
 

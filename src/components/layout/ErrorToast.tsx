@@ -7,16 +7,17 @@ const AUTO_DISMISS_MS = 4000;
 
 export function ErrorToast() {
   const { error } = useAuthContext() as { error?: string | null };
-  const [visible, setVisible] = useState(false);
+  // 자동 소멸: 타이머가 비동기로 dismissed를 갱신하고, 표시 여부는 파생값으로 계산한다
+  // (effect 본문에서 동기 setState를 호출하지 않아 cascading render를 피함).
+  const [dismissed, setDismissed] = useState<string | null>(null);
 
   useEffect(() => {
     if (!error) return;
-    setVisible(true);
-    const t = setTimeout(() => setVisible(false), AUTO_DISMISS_MS);
+    const t = setTimeout(() => setDismissed(error), AUTO_DISMISS_MS);
     return () => clearTimeout(t);
   }, [error]);
 
-  if (!error || !visible) return null;
+  if (!error || dismissed === error) return null;
 
   return (
     <div
