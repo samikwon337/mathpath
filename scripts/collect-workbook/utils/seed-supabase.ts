@@ -29,7 +29,9 @@ export async function seedAll(sb: SupabaseClient): Promise<void> {
   await upsert(sb, "subjects", subjects.map(toSubjectRow));
   await upsert(sb, "workbooks", workbooks.map(toWorkbookRow));
 
-  // 다대다 조인: 워크북별 기존 매핑 삭제 후 재삽입(멱등)
+  // 다대다 조인: 워크북별 기존 매핑 삭제 후 재삽입(멱등).
+  // 주의: 클라이언트 트랜잭션이 없으므로 delete 후 insert가 실패하면 조인이 비워질 수 있다.
+  // 시드는 운영자가 수동 실행하며 재실행으로 복구 가능하므로 허용한다(실패 시 다시 npm run seed).
   const subjectRows = workbooks.flatMap(toWorkbookSubjectRows);
   const workbookIds = workbooks.map((w) => w.id);
   const { error: delErr } = await sb

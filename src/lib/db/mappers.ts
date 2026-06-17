@@ -81,8 +81,8 @@ export function mapRoadmap(r: Row): Roadmap {
     name: str(r.name),
     description: orUndef<string>(r.description),
     type: r.type as RoadmapType,
-    targetStartLevel: num(r.target_start_level),
-    targetEndLevel: num(r.target_end_level),
+    targetStartLevel: orUndef<number>(r.target_start_level) ?? 0,
+    targetEndLevel: orUndef<number>(r.target_end_level) ?? 0,
     publisherId: orUndef<string>(r.publisher_id),
     displayOrder: orUndef<number>(r.display_order) ?? 0,
   };
