@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense, Fragment } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ReactFlow,
@@ -30,7 +30,6 @@ import { roadmapGradeGroups, RoadmapGradeGroup } from "@/data/roadmaps";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useStudyHoursPerDay } from "@/hooks/use-study-hours-per-day";
 import { RoadmapTimeline } from "@/components/roadmap/RoadmapTimeline";
-import { StudyHoursControl } from "@/components/roadmap/StudyHoursControl";
 import { getStepDuration } from "@/lib/roadmap-timeline";
 
 const COL_WIDTH = 240;
@@ -90,7 +89,7 @@ function WorkbookNode({ data }: NodeProps) {
       <div className="text-sm font-semibold">{d.label}</div>
       <div className="text-[10px] text-gray-600 mt-0.5">{d.publisher}</div>
       {d.durationWeeks != null && (
-        <div className="text-[10px] font-medium text-indigo-600 mt-0.5">
+        <div className="text-[10px] font-medium text-primary mt-0.5">
           약 {d.durationWeeks}주
         </div>
       )}
@@ -197,7 +196,7 @@ function buildFlatFlow(
             target: step.id,
             animated: !step.isOptional,
             style: {
-              stroke: step.isOptional ? "#94a3b8" : "#6366f1",
+              stroke: step.isOptional ? "#94a3b8" : "var(--color-primary)",
               strokeDasharray: step.isOptional ? "5,5" : undefined,
             },
           });
@@ -310,7 +309,7 @@ function buildGroupedFlow(
               target: step.id,
               animated: !step.isOptional,
               style: {
-                stroke: step.isOptional ? "#94a3b8" : "#6366f1",
+                stroke: step.isOptional ? "#94a3b8" : "var(--color-primary)",
                 strokeDasharray: step.isOptional ? "5,5" : undefined,
               },
             });
@@ -321,7 +320,7 @@ function buildGroupedFlow(
             source: prevGroupLastMainStepId,
             target: step.id,
             animated: true,
-            style: { stroke: "#6366f1", strokeWidth: 2 },
+            style: { stroke: "var(--color-primary)", strokeWidth: 2 },
           });
         }
       });
@@ -406,7 +405,7 @@ function RoadmapLegend({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
       <div className="flex items-center gap-1.5">
-        <div className="h-3 w-6 rounded border-2 border-indigo-500 bg-indigo-50" />
+        <div className="h-3 w-6 rounded border-2 border-primary bg-primary/5" />
         필수 교재
       </div>
       <div className="flex items-center gap-1.5">
@@ -414,7 +413,7 @@ function RoadmapLegend({ isLoggedIn }: { isLoggedIn: boolean }) {
         선택 / 타사 확장
       </div>
       <div className="flex items-center gap-1.5">
-        <div className="h-0.5 w-6 bg-indigo-500" />
+        <div className="h-0.5 w-6 bg-primary" />
         필수 경로
       </div>
       <div className="flex items-center gap-1.5">
@@ -572,26 +571,16 @@ function RoadmapSection({
                 getWorkbookStatus={getWorkbookStatus}
               />
             ) : (
-              <>
-                {enableTimeline && (
-                  <div className="mb-4">
-                    <StudyHoursControl
-                      hoursPerDay={hoursPerDay}
-                      onChange={onHoursChange}
-                    />
-                  </div>
-                )}
-                <RoadmapFlowChart
-                  key={`${rm.id}-${hoursPerDay}`}
-                  steps={getSteps(rm.id)}
-                  roadmapId={rm.id}
-                  isLoggedIn={isLoggedIn}
-                  getWorkbookStatus={getWorkbookStatus}
-                  onNodeClick={onNodeClick}
-                  hoursPerDay={hoursPerDay}
-                  getPublisherName={getPublisherName}
-                />
-              </>
+              <RoadmapFlowChart
+                key={`${rm.id}-${hoursPerDay}`}
+                steps={getSteps(rm.id)}
+                roadmapId={rm.id}
+                isLoggedIn={isLoggedIn}
+                getWorkbookStatus={getWorkbookStatus}
+                onNodeClick={onNodeClick}
+                hoursPerDay={hoursPerDay}
+                getPublisherName={getPublisherName}
+              />
             )}
 
             <RoadmapLegend isLoggedIn={isLoggedIn} />
@@ -711,26 +700,31 @@ function RoadmapViewInner({
           defaultView="timeline"
           renderDescription={(rm) => (
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold">
-                  {rm.targetStartLevel}등급
-                </span>
-                <span className="text-muted-foreground">&rarr;</span>
-                <span className="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 px-2.5 py-0.5 text-xs font-semibold">
-                  {rm.id === "rm-5to-top" ? "최상위" : `${rm.targetEndLevel}등급`}
-                </span>
-              </div>
-              {rm.id === "rm-5to-top" && (
-                <div className="flex flex-wrap gap-1.5">
-                  {roadmapGradeGroups["rm-5to-top"]?.map((g) => (
-                    <span
-                      key={g.id}
-                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                      style={{ backgroundColor: g.borderColor }}
-                    >
-                      {g.label}
-                    </span>
+              {rm.id === "rm-5to-top" ? (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {roadmapGradeGroups["rm-5to-top"]?.map((g, i, arr) => (
+                    <Fragment key={g.id}>
+                      <span
+                        className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+                        style={{ backgroundColor: g.borderColor }}
+                      >
+                        {g.label}
+                      </span>
+                      {i < arr.length - 1 && (
+                        <span className="text-muted-foreground">&rarr;</span>
+                      )}
+                    </Fragment>
                   ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold">
+                    {rm.targetStartLevel}등급
+                  </span>
+                  <span className="text-muted-foreground">&rarr;</span>
+                  <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-semibold">
+                    {rm.targetEndLevel}등급
+                  </span>
                 </div>
               )}
               <p className="text-sm text-muted-foreground">{rm.description}</p>

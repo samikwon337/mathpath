@@ -129,10 +129,10 @@ export function QuickRecommend({ workbooks, publishers }: QuickRecommendProps) {
   };
 
   return (
-    <section className="rounded-2xl bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/30 border p-6 md:p-8">
+    <section className="rounded-2xl border bg-card p-6 md:p-8">
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/50">
-          <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+          <Sparkles className="h-4 w-4 text-primary" />
         </div>
         <div>
           <h2 className="text-lg font-bold">나에게 맞는 문제집 찾기</h2>
@@ -149,7 +149,7 @@ export function QuickRecommend({ workbooks, publishers }: QuickRecommendProps) {
             <div
               className={`h-2 w-2 rounded-full transition-colors ${
                 s <= step
-                  ? "bg-violet-500"
+                  ? "bg-primary"
                   : "bg-slate-300 dark:bg-slate-600"
               }`}
             />
@@ -157,7 +157,7 @@ export function QuickRecommend({ workbooks, publishers }: QuickRecommendProps) {
               <div
                 className={`h-px w-6 transition-colors ${
                   s < step
-                    ? "bg-violet-400"
+                    ? "bg-primary/60"
                     : "bg-slate-300 dark:bg-slate-600"
                 }`}
               />
@@ -179,7 +179,7 @@ export function QuickRecommend({ workbooks, publishers }: QuickRecommendProps) {
                 key={opt.label}
                 variant="outline"
                 size="sm"
-                className="bg-white/70 dark:bg-slate-800/70 hover:bg-violet-100 dark:hover:bg-violet-900/40 hover:border-violet-300"
+                className="bg-white/70 dark:bg-slate-800/70 hover:bg-accent hover:border-primary"
                 onClick={() => handleGradeSelect(opt.value)}
               >
                 {opt.label}
@@ -199,7 +199,7 @@ export function QuickRecommend({ workbooks, publishers }: QuickRecommendProps) {
                 key={opt.value}
                 variant="outline"
                 size="sm"
-                className="bg-white/70 dark:bg-slate-800/70 hover:bg-violet-100 dark:hover:bg-violet-900/40 hover:border-violet-300"
+                className="bg-white/70 dark:bg-slate-800/70 hover:bg-accent hover:border-primary"
                 onClick={() => handleNeedSelect(opt.value)}
               >
                 {opt.label}

@@ -125,7 +125,7 @@ function SuggestNode({ data }: NodeProps) {
     >
       <Handle type="target" position={Position.Left} className="!bg-gray-400" />
 
-      <div className="absolute -top-2.5 -right-2.5 h-6 w-6 rounded-full bg-violet-500 flex items-center justify-center text-white">
+      <div className="absolute -top-2.5 -right-2.5 h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
         <Plus className="h-3.5 w-3.5" />
       </div>
 
@@ -141,7 +141,7 @@ function SuggestNode({ data }: NodeProps) {
 
       <div className="text-sm font-semibold">{d.label}</div>
       <div className="text-[10px] text-gray-500">{d.publisher}</div>
-      <div className="text-[9px] text-violet-600 mt-1">{d.reason}</div>
+      <div className="text-[9px] text-primary mt-1">{d.reason}</div>
     </div>
   );
 }
@@ -210,7 +210,7 @@ export function MyRoadmapFlow({
         target: e.to,
         animated: e.type === "next_step",
         style: {
-          stroke: e.type === "complement" ? "#94a3b8" : "#6366f1",
+          stroke: e.type === "complement" ? "#94a3b8" : "var(--color-primary)",
           strokeDasharray: e.type === "complement" ? "5,5" : undefined,
           strokeWidth: 2,
         },
@@ -247,7 +247,7 @@ export function MyRoadmapFlow({
             source: lastNode.workbook.id,
             target: suggestId,
             animated: false,
-            style: { stroke: "#8b5cf6", strokeDasharray: "5,5", strokeWidth: 2 },
+            style: { stroke: "var(--color-primary)", strokeDasharray: "5,5", strokeWidth: 2 },
           });
         }
         if (idx > 0) {
@@ -257,7 +257,7 @@ export function MyRoadmapFlow({
             source: prevSuggest,
             target: suggestId,
             animated: false,
-            style: { stroke: "#8b5cf6", strokeDasharray: "5,5", strokeWidth: 2 },
+            style: { stroke: "var(--color-primary)", strokeDasharray: "5,5", strokeWidth: 2 },
           });
         }
       });
