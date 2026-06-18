@@ -102,8 +102,8 @@ export function WorkbookBrowser({
   };
 
   const SUBJECT_OPTIONS = [
-    { value: "_all", label: "전체" },
-    ...subjects.map((s) => ({ value: s.id, label: s.name })),
+    { value: "_all", label: "전체", hint: undefined as string | undefined },
+    ...subjects.map((s) => ({ value: s.id, label: s.name, hint: s.studyPeriod })),
   ];
   const PUBLISHER_OPTIONS = [
     { value: "_all", label: "전체" },
@@ -141,7 +141,12 @@ export function WorkbookBrowser({
           <SelectContent>
             {SUBJECT_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+                <span className="flex items-baseline gap-2">
+                  <span>{opt.label}</span>
+                  {opt.hint && (
+                    <span className="text-xs text-muted-foreground">{opt.hint}</span>
+                  )}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -285,6 +290,7 @@ export function WorkbookBrowser({
                   key={wb.id}
                   workbook={wb}
                   publisherName={publisherName(wb.publisherId)}
+                  subjects={subjects}
                   onCompareToggle={handleCompareToggle}
                   isCompared={compareIds.includes(wb.id)}
                 />

@@ -34,6 +34,7 @@ export function mapSubject(r: Row): Subject {
     id: str(r.id),
     name: str(r.name),
     category: r.category as Subject["category"],
+    studyPeriod: orUndef<string>(r.study_period),
     displayOrder: num(r.display_order),
   };
 }

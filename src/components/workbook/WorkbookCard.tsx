@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Workbook, DifficultyLevel } from "@/data/types";
+import { Workbook, DifficultyLevel, Subject } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { LevelBadge } from "./LevelBadge";
 import { BookTypeBadge } from "./BookTypeBadge";
@@ -10,6 +10,7 @@ import { WorkbookCoverPlaceholder } from "./WorkbookCoverPlaceholder";
 interface WorkbookCardProps {
   workbook: Workbook;
   publisherName?: string;
+  subjects?: Subject[];
   onCompareToggle?: (workbookId: string) => void;
   isCompared?: boolean;
 }
@@ -17,9 +18,20 @@ interface WorkbookCardProps {
 export function WorkbookCard({
   workbook,
   publisherName,
+  subjects,
   onCompareToggle,
   isCompared,
 }: WorkbookCardProps) {
+  const coveredSubjects = subjects
+    ? subjects
+        .filter((s) => workbook.subjectIds.includes(s.id))
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+    : [];
+  const subjectsLabel =
+    subjects && coveredSubjects.length === subjects.length
+      ? "전 과목"
+      : coveredSubjects.map((s) => s.name).join(" · ");
+
   return (
     <Link href={`/workbooks/${workbook.id}`}>
       <Card
@@ -65,6 +77,12 @@ export function WorkbookCard({
           <p className="text-xs text-muted-foreground mt-0.5">
             {publisherName}
           </p>
+          {subjectsLabel && (
+            <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-1">
+              <span className="text-muted-foreground/60">과목 </span>
+              {subjectsLabel}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
             {workbook.summary}
           </p>

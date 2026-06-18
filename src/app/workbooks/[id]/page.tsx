@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, ThumbsUp, ThumbsDown, ChevronRight, BookOpen, Lightbulb, Video } from "lucide-react";
+import { ExternalLink, ThumbsUp, ThumbsDown, ChevronRight, BookOpen, Lightbulb, Video, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import { WorkbookCoverPlaceholder } from "@/components/workbook/WorkbookCoverPla
 import { WorkbookCard } from "@/components/workbook/WorkbookCard";
 import {
   getWorkbookById, getPublisherById, getWorkbookRelations,
-  getWorkbooksByPublisher, getYoutubeLinksByWorkbookId,
+  getWorkbooksByPublisher, getYoutubeLinksByWorkbookId, getSubjects,
 } from "@/lib/db/catalog";
 import { DifficultyLevel } from "@/data/types";
 import { WorkbookStatusControl } from "./WorkbookStatusControl";
@@ -26,13 +26,17 @@ export default async function WorkbookDetailPage({
   const workbook = await getWorkbookById(id);
   if (!workbook) notFound();
 
-  const [publisher, relations, publisherWorkbooksAll, youtubeLinks] = await Promise.all([
+  const [publisher, relations, publisherWorkbooksAll, youtubeLinks, allSubjects] = await Promise.all([
     getPublisherById(workbook.publisherId),
     getWorkbookRelations(id),
     getWorkbooksByPublisher(workbook.publisherId),
     getYoutubeLinksByWorkbookId(id),
+    getSubjects(),
   ]);
   const publisherWorkbooks = publisherWorkbooksAll.filter((w) => w.id !== id);
+  const workbookSubjects = allSubjects
+    .filter((s) => workbook.subjectIds.includes(s.id))
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
@@ -102,6 +106,30 @@ export default async function WorkbookDetailPage({
               <p className="mt-2 text-muted-foreground">{workbook.description}</p>
             )}
           </div>
+
+          {/* Subjects + Study Period */}
+          {workbookSubjects.length > 0 && (
+            <div>
+              <h2 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                <CalendarClock className="h-4 w-4" />
+                다루는 과목
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {workbookSubjects.map((subject) => (
+                  <Badge
+                    key={subject.id}
+                    variant="secondary"
+                    className="gap-1.5 py-1 px-2.5"
+                  >
+                    <span className="font-medium">{subject.name}</span>
+                    {subject.studyPeriod && (
+                      <span className="text-muted-foreground">{subject.studyPeriod}</span>
+                    )}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Pros & Cons */}
           {(workbook.pros.length > 0 || workbook.cons.length > 0) && (
@@ -301,7 +329,7 @@ export default async function WorkbookDetailPage({
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {publisherWorkbooks.slice(0, 4).map((wb) => (
-                    <WorkbookCard key={wb.id} workbook={wb} publisherName={publisher?.name} />
+                    <WorkbookCard key={wb.id} workbook={wb} publisherName={publisher?.name} subjects={allSubjects} />
                   ))}
                 </div>
               </div>

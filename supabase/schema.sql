@@ -17,6 +17,7 @@ CREATE TABLE subjects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('common', 'general', 'career')),
+  study_period TEXT,
   display_order INT NOT NULL
 );
 

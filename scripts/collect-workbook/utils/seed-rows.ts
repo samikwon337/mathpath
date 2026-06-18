@@ -13,7 +13,7 @@ export function toPublisherRow(p: Publisher) {
 }
 
 export function toSubjectRow(s: Subject) {
-  return { id: s.id, name: s.name, category: s.category, display_order: s.displayOrder };
+  return { id: s.id, name: s.name, category: s.category, study_period: s.studyPeriod ?? null, display_order: s.displayOrder };
 }
 
 export function toWorkbookRow(w: Workbook) {

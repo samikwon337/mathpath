@@ -52,8 +52,8 @@ describe("getRoadmapTimeline", () => {
   });
 
   it("recalculates total when hours per day changes", () => {
-    const at2h = getRoadmapTimeline("rm-5to3", 2);
-    const at4h = getRoadmapTimeline("rm-5to3", 4);
+    const at2h = getRoadmapTimeline("rm-5to4", 2);
+    const at4h = getRoadmapTimeline("rm-5to4", 4);
     assert.equal(at4h.total.totalHours, at2h.total.totalHours);
     assert.ok(at4h.total.days < at2h.total.days);
   });
