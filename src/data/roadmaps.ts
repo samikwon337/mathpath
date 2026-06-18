@@ -16,9 +16,17 @@ export const roadmapGradeGroups: Record<string, RoadmapGradeGroup[]> = {
       id: "grp-5",
       label: "5등급",
       sublabel: "기초 다지기",
-      stepOrders: [1, 2, 3, 4],
+      stepOrders: [1, 2],
       bgColor: "#ecfdf5",
       borderColor: "#10b981",
+    },
+    {
+      id: "grp-4",
+      label: "4등급",
+      sublabel: "유형 다지기",
+      stepOrders: [3, 4],
+      bgColor: "#f0fdfa",
+      borderColor: "#14b8a6",
     },
     {
       id: "grp-3",
@@ -60,13 +68,22 @@ export const roadmaps: Roadmap[] = [
     displayOrder: 0,
   },
   {
-    id: "rm-5to3",
-    name: "5등급 → 3등급",
-    description: "기초 다지기 로드맵. 개념 확립부터 기본 유형까지 단계별로 학습합니다.",
+    id: "rm-5to4",
+    name: "5등급 → 4등급",
+    description: "개념 정리 로드맵. 개념 확립부터 기본 유형 훈련까지 단계별로 학습합니다.",
     type: "grade",
     targetStartLevel: 5,
-    targetEndLevel: 3,
+    targetEndLevel: 4,
     displayOrder: 1,
+  },
+  {
+    id: "rm-4to3",
+    name: "4등급 → 3등급",
+    description: "유형 다지기 로드맵. 핵심 유형을 집중 훈련하고 기출로 마무리합니다.",
+    type: "grade",
+    targetStartLevel: 4,
+    targetEndLevel: 3,
+    displayOrder: 2,
   },
   {
     id: "rm-3to2",
@@ -75,7 +92,7 @@ export const roadmaps: Roadmap[] = [
     type: "grade",
     targetStartLevel: 3,
     targetEndLevel: 2,
-    displayOrder: 2,
+    displayOrder: 3,
   },
   {
     id: "rm-2to1",
@@ -84,7 +101,7 @@ export const roadmaps: Roadmap[] = [
     type: "grade",
     targetStartLevel: 2,
     targetEndLevel: 1,
-    displayOrder: 3,
+    displayOrder: 4,
   },
   {
     id: "rm-top",
@@ -93,7 +110,7 @@ export const roadmaps: Roadmap[] = [
     type: "grade",
     targetStartLevel: 1,
     targetEndLevel: 1,
-    displayOrder: 4,
+    displayOrder: 5,
   },
 
   // ── 출판사별 로드맵 ──
@@ -183,13 +200,15 @@ export const roadmapSteps: RoadmapStep[] = [
   { id: "rs-top-14a", roadmapId: "rm-5to-top", workbookId: "wb-mathgod", stepOrder: 14, isOptional: true, note: "수학의 신도 대안", estimatedStudyDays: 28 },
   { id: "rs-top-15", roadmapId: "rm-5to-top", workbookId: "wb-maple-gichul", stepOrder: 15, isOptional: false, note: "[만점] 기출 반복 + N제", estimatedStudyDays: 21 },
 
-  // ── 5등급 → 3등급 ──
-  { id: "rs-1", roadmapId: "rm-5to3", workbookId: "wb-pungsanja", stepOrder: 1, isOptional: false, note: "개념 기초부터 시작", estimatedStudyDays: 21 },
-  { id: "rs-1a", roadmapId: "rm-5to3", workbookId: "wb-gaenyeomssen", stepOrder: 1, isOptional: true, note: "개념쎈도 대안으로 가능", estimatedStudyDays: 21 },
-  { id: "rs-2", roadmapId: "rm-5to3", workbookId: "wb-lightssen", stepOrder: 2, isOptional: false, note: "기본 유형 훈련", estimatedStudyDays: 28 },
-  { id: "rs-2a", roadmapId: "rm-5to3", workbookId: "wb-rpm", stepOrder: 2, isOptional: true, note: "RPM도 대안으로 가능", estimatedStudyDays: 28 },
-  { id: "rs-3", roadmapId: "rm-5to3", workbookId: "wb-ssen", stepOrder: 3, isOptional: false, note: "A+B단계 집중", estimatedStudyDays: 35 },
-  { id: "rs-4", roadmapId: "rm-5to3", workbookId: "wb-jaistory", stepOrder: 4, isOptional: false, note: "기출로 마무리", estimatedStudyDays: 28 },
+  // ── 5등급 → 4등급 ──
+  { id: "rs-1", roadmapId: "rm-5to4", workbookId: "wb-pungsanja", stepOrder: 1, isOptional: false, note: "개념 기초부터 시작", estimatedStudyDays: 21 },
+  { id: "rs-1a", roadmapId: "rm-5to4", workbookId: "wb-gaenyeomssen", stepOrder: 1, isOptional: true, note: "개념쎈도 대안으로 가능", estimatedStudyDays: 21 },
+  { id: "rs-2", roadmapId: "rm-5to4", workbookId: "wb-lightssen", stepOrder: 2, isOptional: false, note: "기본 유형 훈련", estimatedStudyDays: 28 },
+  { id: "rs-2a", roadmapId: "rm-5to4", workbookId: "wb-rpm", stepOrder: 2, isOptional: true, note: "RPM도 대안으로 가능", estimatedStudyDays: 28 },
+
+  // ── 4등급 → 3등급 ──
+  { id: "rs-3", roadmapId: "rm-4to3", workbookId: "wb-ssen", stepOrder: 1, isOptional: false, note: "A+B단계 집중", estimatedStudyDays: 35 },
+  { id: "rs-4", roadmapId: "rm-4to3", workbookId: "wb-jaistory", stepOrder: 2, isOptional: false, note: "기출로 마무리", estimatedStudyDays: 28 },
 
   // ── 3등급 → 2등급 ──
   { id: "rs-5", roadmapId: "rm-3to2", workbookId: "wb-gaenyeomwonri", stepOrder: 1, isOptional: false, note: "개념 완전 정리", estimatedStudyDays: 21 },

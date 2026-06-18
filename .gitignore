@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env*.example
 
 # vercel
 .vercel
@@ -43,3 +44,6 @@ next-env.d.ts
 # collect-workbook drafts (examples/ 제외)
 /scripts/collect-workbook/drafts/*
 !/scripts/collect-workbook/drafts/.gitkeep
+
+# Visual brainstorm companion
+.superpowers/

@@ -3,6 +3,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { Profile, UserWorkbook, WorkbookStatus } from "@/data/types";
 import { supabase } from "@/lib/supabase";
+import {
+  fetchUserWorkbooks,
+  upsertUserWorkbook,
+  deleteUserWorkbook,
+  fetchProfile,
+} from "@/lib/db/user-data";
 import type { User } from "@supabase/supabase-js";
 
 function userToProfile(user: User): Profile {
@@ -25,6 +31,20 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userWorkbooks, setUserWorkbooks] = useState<UserWorkbook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadUserData = useCallback(async (userId: string) => {
+    try {
+      const [uws, prof] = await Promise.all([
+        fetchUserWorkbooks(userId),
+        fetchProfile(userId),
+      ]);
+      setUserWorkbooks(uws);
+      if (prof) setProfile(prof);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, []);
 
   // 초기 세션 확인 + 세션 변경 구독
   useEffect(() => {
@@ -32,6 +52,7 @@ export function useAuth() {
       if (session?.user) {
         setIsLoggedIn(true);
         setProfile(userToProfile(session.user));
+        loadUserData(session.user.id);
       }
       setLoading(false);
     });
@@ -42,6 +63,7 @@ export function useAuth() {
       if (session?.user) {
         setIsLoggedIn(true);
         setProfile(userToProfile(session.user));
+        loadUserData(session.user.id);
       } else {
         setIsLoggedIn(false);
         setProfile(null);
@@ -50,7 +72,7 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadUserData]);
 
   const login = useCallback(async () => {
     await supabase.auth.signInWithOAuth({
@@ -69,48 +91,73 @@ export function useAuth() {
   }, []);
 
   const updateWorkbookStatus = useCallback(
-    (workbookId: string, status: WorkbookStatus) => {
-      setUserWorkbooks((prev) => {
-        const existing = prev.find((uw) => uw.workbookId === workbookId);
-        const now = new Date().toISOString().split("T")[0];
+    async (workbookId: string, status: WorkbookStatus) => {
+      const userId = profile?.id;
+      if (!userId) return;
+      const snapshot = userWorkbooks;
+      const now = new Date().toISOString().split("T")[0];
+      const existing = snapshot.find((uw) => uw.workbookId === workbookId);
+      const startedAt =
+        status === "in_progress" && !existing?.startedAt
+          ? now
+          : existing?.startedAt;
+      const completedAt = status === "completed" ? now : undefined;
 
-        if (existing) {
+      setUserWorkbooks((prev) => {
+        const found = prev.find((uw) => uw.workbookId === workbookId);
+        if (found) {
           return prev.map((uw) =>
             uw.workbookId === workbookId
-              ? {
-                  ...uw,
-                  status,
-                  startedAt:
-                    status === "in_progress" && !uw.startedAt
-                      ? now
-                      : uw.startedAt,
-                  completedAt: status === "completed" ? now : undefined,
-                }
+              ? { ...uw, status, startedAt, completedAt }
               : uw
           );
-        } else {
-          return [
-            ...prev,
-            {
-              id: `uw-${Date.now()}`,
-              userId: profile?.id || "",
-              workbookId,
-              status,
-              startedAt: status === "in_progress" ? now : undefined,
-              completedAt: status === "completed" ? now : undefined,
-            },
-          ];
         }
+        return [
+          ...prev,
+          {
+            id: `uw-${Date.now()}`,
+            userId,
+            workbookId,
+            status,
+            startedAt,
+            completedAt,
+          },
+        ];
       });
+
+      try {
+        await upsertUserWorkbook({
+          userId,
+          workbookId,
+          status,
+          startedAt,
+          completedAt,
+        });
+      } catch (e) {
+        setUserWorkbooks(snapshot); // 롤백
+        setError((e as Error).message);
+      }
     },
-    [profile]
+    [profile, userWorkbooks]
   );
 
-  const removeWorkbook = useCallback((workbookId: string) => {
-    setUserWorkbooks((prev) =>
-      prev.filter((uw) => uw.workbookId !== workbookId)
-    );
-  }, []);
+  const removeWorkbook = useCallback(
+    async (workbookId: string) => {
+      const userId = profile?.id;
+      if (!userId) return;
+      const snapshot = userWorkbooks;
+      setUserWorkbooks((prev) =>
+        prev.filter((uw) => uw.workbookId !== workbookId)
+      );
+      try {
+        await deleteUserWorkbook(userId, workbookId);
+      } catch (e) {
+        setUserWorkbooks(snapshot); // 롤백
+        setError((e as Error).message);
+      }
+    },
+    [profile, userWorkbooks]
+  );
 
   const getWorkbookStatus = useCallback(
     (workbookId: string) => {
@@ -124,6 +171,7 @@ export function useAuth() {
     profile,
     userWorkbooks,
     loading,
+    error,
     login,
     logout,
     updateWorkbookStatus,

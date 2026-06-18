@@ -11,12 +11,13 @@ import { LevelBadge } from "./LevelBadge";
 import { BookTypeBadge } from "./BookTypeBadge";
 import {
   Workbook,
+  Publisher,
   DifficultyLevel,
 } from "@/data/types";
-import { getPublisherById } from "@/lib/api";
 
 interface WorkbookCompareProps {
   workbooks: Workbook[];
+  publishers: Publisher[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -40,6 +41,7 @@ function CompareRow({
 
 export function WorkbookCompare({
   workbooks,
+  publishers,
   open,
   onOpenChange,
 }: WorkbookCompareProps) {
@@ -73,7 +75,9 @@ export function WorkbookCompare({
             <tbody>
               <CompareRow label="출판사">
                 {workbooks.map((wb) => {
-                  const publisher = getPublisherById(wb.publisherId);
+                  const publisher = publishers.find(
+                    (p) => p.id === wb.publisherId
+                  );
                   return (
                     <td key={wb.id} className="py-2.5 px-2 align-top">
                       {publisher?.name || "-"}

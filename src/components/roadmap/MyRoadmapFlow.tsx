@@ -17,8 +17,8 @@ import "@xyflow/react/dist/style.css";
 import { useRouter } from "next/navigation";
 import { CheckCircle, BookOpen, ClipboardList, Plus } from "lucide-react";
 import { DifficultyLevel, WorkbookStatus } from "@/data/types";
-import { MyRoadmapNode as MyRoadmapNodeData } from "@/lib/api";
-import { getPublisherById } from "@/lib/api";
+import type { Publisher } from "@/data/types";
+import { MyRoadmapNode as MyRoadmapNodeData } from "@/lib/transform";
 
 const LEVEL_BG: Record<DifficultyLevel, string> = {
   1: "#d1fae5",
@@ -125,7 +125,7 @@ function SuggestNode({ data }: NodeProps) {
     >
       <Handle type="target" position={Position.Left} className="!bg-gray-400" />
 
-      <div className="absolute -top-2.5 -right-2.5 h-6 w-6 rounded-full bg-violet-500 flex items-center justify-center text-white">
+      <div className="absolute -top-2.5 -right-2.5 h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
         <Plus className="h-3.5 w-3.5" />
       </div>
 
@@ -141,7 +141,7 @@ function SuggestNode({ data }: NodeProps) {
 
       <div className="text-sm font-semibold">{d.label}</div>
       <div className="text-[10px] text-gray-500">{d.publisher}</div>
-      <div className="text-[9px] text-violet-600 mt-1">{d.reason}</div>
+      <div className="text-[9px] text-primary mt-1">{d.reason}</div>
     </div>
   );
 }
@@ -152,16 +152,20 @@ export function MyRoadmapFlow({
   myNodes,
   myEdges,
   suggestedNext,
+  publishers,
   height = 350,
 }: {
   myNodes: MyRoadmapNodeData[];
   myEdges: { from: string; to: string; type: string; note?: string }[];
   suggestedNext: { id: string; title: string; publisherId: string; difficultyLevel: number; reason: string }[];
+  publishers: Publisher[];
   height?: number;
 }) {
   const router = useRouter();
 
   const { nodes: flowNodes, edges: flowEdges } = useMemo(() => {
+    const getPublisherById = (id: string) =>
+      publishers.find((p) => p.id === id);
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -206,7 +210,7 @@ export function MyRoadmapFlow({
         target: e.to,
         animated: e.type === "next_step",
         style: {
-          stroke: e.type === "complement" ? "#94a3b8" : "#6366f1",
+          stroke: e.type === "complement" ? "#94a3b8" : "var(--color-primary)",
           strokeDasharray: e.type === "complement" ? "5,5" : undefined,
           strokeWidth: 2,
         },
@@ -243,7 +247,7 @@ export function MyRoadmapFlow({
             source: lastNode.workbook.id,
             target: suggestId,
             animated: false,
-            style: { stroke: "#8b5cf6", strokeDasharray: "5,5", strokeWidth: 2 },
+            style: { stroke: "var(--color-primary)", strokeDasharray: "5,5", strokeWidth: 2 },
           });
         }
         if (idx > 0) {
@@ -253,14 +257,14 @@ export function MyRoadmapFlow({
             source: prevSuggest,
             target: suggestId,
             animated: false,
-            style: { stroke: "#8b5cf6", strokeDasharray: "5,5", strokeWidth: 2 },
+            style: { stroke: "var(--color-primary)", strokeDasharray: "5,5", strokeWidth: 2 },
           });
         }
       });
     }
 
     return { nodes, edges };
-  }, [myNodes, myEdges, suggestedNext]);
+  }, [myNodes, myEdges, suggestedNext, publishers]);
 
   const [nodes, , onNodesChange] = useNodesState(flowNodes);
   const [edges, , onEdgesChange] = useEdgesState(flowEdges);

@@ -9,6 +9,8 @@ export interface Subject {
   id: string;
   name: string;
   category: "common" | "general" | "career";
+  /** 일반적으로 배우는 시기 (예: "고1 1학기") */
+  studyPeriod?: string;
   displayOrder: number;
 }
 
