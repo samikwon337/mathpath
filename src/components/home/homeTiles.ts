@@ -24,7 +24,7 @@ export interface HomeTileContext {
   hasWorkbooks: boolean;
 }
 
-const LOGGED_OUT: HomeTileSpec[] = [
+const LOGGED_OUT: readonly HomeTileSpec[] = [
   { key: "hero", span: "md:col-span-2" },
   { key: "quickRecommend", span: "md:col-span-2" },
   { key: "gradeRoadmap", span: "md:col-span-2" },
@@ -32,14 +32,14 @@ const LOGGED_OUT: HomeTileSpec[] = [
   { key: "levelShortcut", span: "md:col-span-4" },
 ];
 
-const LOGGED_IN_EMPTY: HomeTileSpec[] = [
+const LOGGED_IN_EMPTY: readonly HomeTileSpec[] = [
   { key: "emptyRoadmap", span: "md:col-span-4" },
   { key: "quickRecommend", span: "md:col-span-2" },
   { key: "gradeRoadmap", span: "md:col-span-2" },
   { key: "levelShortcut", span: "md:col-span-4" },
 ];
 
-const LOGGED_IN_FULL: HomeTileSpec[] = [
+const LOGGED_IN_FULL: readonly HomeTileSpec[] = [
   { key: "greetingStats", span: "md:col-span-2" },
   { key: "progress", span: "md:col-span-1" },
   { key: "addBook", span: "md:col-span-1" },
@@ -51,7 +51,7 @@ const LOGGED_IN_FULL: HomeTileSpec[] = [
   { key: "levelShortcut", span: "md:col-span-2" },
 ];
 
-export function getHomeTiles(ctx: HomeTileContext): HomeTileSpec[] {
+export function getHomeTiles(ctx: HomeTileContext): readonly HomeTileSpec[] {
   if (!ctx.isLoggedIn) return LOGGED_OUT;
   return ctx.hasWorkbooks ? LOGGED_IN_FULL : LOGGED_IN_EMPTY;
 }
