@@ -9,7 +9,7 @@
     "lint": "eslint",
     "collect": "tsx scripts/collect-workbook/index.ts",
     "seed": "tsx scripts/collect-workbook/index.ts seed",
-    "test": "tsx --test scripts/collect-workbook/utils/*.test.ts src/lib/roadmap-timeline.test.ts src/lib/transform.test.ts src/lib/db/mappers.test.ts",
+    "test": "tsx --test scripts/collect-workbook/utils/*.test.ts src/lib/roadmap-timeline.test.ts src/lib/transform.test.ts src/lib/db/mappers.test.ts src/components/home/homeTiles.test.ts",
     "test:collect": "tsx --test scripts/collect-workbook/utils/*.test.ts",
     "test:roadmap": "tsx --test src/lib/roadmap-timeline.test.ts",
     "test:integration": "tsx --test src/lib/db/user-data.itest.ts"
